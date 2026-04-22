@@ -3,7 +3,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "TrustScan",
-  description: "AI-powered fake review detection",
+  description: "AI-powered fake review detection platform",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
