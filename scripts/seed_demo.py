@@ -44,9 +44,13 @@ def seed():
     #   [50-1149] = 110 normal users × 10 exclusive products each (no overlap)
     asin_pool = ["B" + hashlib.md5(f"product_{k}".encode()).hexdigest()[:9].upper() for k in range(1600)]
 
-    # 160 users total:
-    #   U00000-U00049 = 50 ring users in 10 groups of 5; each group reviews the same 5 ring products
-    #   U00050-U00159 = 110 normal users; each reviews only their own 10 exclusive products
+    # Assign 160 random non-sequential user IDs so rings don't look synthetic
+    id_pool = list(range(10000, 99999))
+    random.shuffle(id_pool)
+    uid_map = [f"U{id_pool[k]:05d}" for k in range(160)]
+    # uid_map[0..49]   = ring users (10 groups of 5)
+    # uid_map[50..159] = normal users (110 with exclusive product slices)
+
     user_ids = []
     asins = []
 
@@ -61,14 +65,13 @@ def seed():
             ring_group = user_num // 5
             asin = asin_pool[ring_group * 5 + (ring_review_counts[user_num] % 5)]
             ring_review_counts[user_num] += 1
-            user_ids.append(f"U{user_num:05d}")
+            user_ids.append(uid_map[user_num])
         else:
             # Normal user — each has their own exclusive slice of 10 products
             user_idx = i % 110
-            user_num = 50 + user_idx
             asin = asin_pool[50 + user_idx * 10 + (normal_review_counts[user_idx] % 10)]
             normal_review_counts[user_idx] += 1
-            user_ids.append(f"U{user_num:05d}")
+            user_ids.append(uid_map[50 + user_idx])
         asins.append(asin)
 
     df["user_id"] = user_ids
