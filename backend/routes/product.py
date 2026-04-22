@@ -20,7 +20,7 @@ def get_product_reviews(asin: str, limit: int = 50, offset: int = 0, deep: bool 
                COALESCE(rr.similarity_flagged, false) as similarity_flagged,
                COALESCE(rr.ring_flagged, false) as ring_flagged,
                COALESCE(rr.llm_flagged, false) as llm_flagged,
-               rr.llm_explanation, rr.reviewer_risk,
+               NULL as llm_explanation, NULL as reviewer_risk,
                COALESCE(rr.trust_score, 1.0) as trust_score
         FROM reviews r
         LEFT JOIN review_results rr ON r.review_id = rr.review_id
