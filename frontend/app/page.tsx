@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Shield, ShoppingBag, BarChart3, MessageSquare } from "lucide-react";
+import { Shield, ShoppingBag, BarChart3, MessageSquare, User } from "lucide-react";
 
 const roles = [
   {
@@ -28,6 +28,15 @@ const roles = [
     accent: "from-emerald-500/20 to-teal-500/10 border-emerald-500/30 hover:border-emerald-400/60",
     iconColor: "text-emerald-400",
     badge: "Consumer",
+  },
+  {
+    href: "/reviewer",
+    icon: User,
+    label: "Reviewer Profile",
+    description: "Look up any reviewer by ID — see their risk level, reviewed products, and behaviour signals.",
+    accent: "from-violet-500/20 to-purple-500/10 border-violet-500/30 hover:border-violet-400/60",
+    iconColor: "text-violet-400",
+    badge: "Lookup",
   },
   {
     href: "/analyst",
@@ -65,7 +74,7 @@ export default function Home() {
         </span>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-2xl">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 w-full max-w-4xl">
         {roles.map((role) => {
           const Icon = role.icon;
           return (
