@@ -39,21 +39,22 @@ def seed():
 
     df["review_id"] = df.index.map(lambda i: f"R{i:07d}")
 
-    # 200 products: first 50 are "ring products", rest are general
-    asin_pool = ["B" + hashlib.md5(f"product_{k}".encode()).hexdigest()[:9].upper() for k in range(200)]
+    # 1600 products:
+    #   [0-49]   = ring products (10 groups × 5 products each)
+    #   [50-1149] = 110 normal users × 10 exclusive products each (no overlap)
+    asin_pool = ["B" + hashlib.md5(f"product_{k}".encode()).hexdigest()[:9].upper() for k in range(1600)]
 
-    # 200 users: first 50 are in 10 explicit rings (5 users each), rest are normal
-    # Ring users (U00000-U00049): each ring group shares exactly 5 ring products
-    # Normal users (U00050-U00199): review random general products
+    # 160 users total:
+    #   U00000-U00049 = 50 ring users in 10 groups of 5; each group reviews the same 5 ring products
+    #   U00050-U00159 = 110 normal users; each reviews only their own 10 exclusive products
     user_ids = []
     asins = []
-    rng = random.Random(42)
 
     ring_review_counts = [0] * 50
-    normal_review_counts = [0] * 150
+    normal_review_counts = [0] * 110
 
     for i in range(len(df)):
-        # Alternate: 1 ring review per 3 normal reviews
+        # Every 4th review (25%) comes from a ring user
         if i % 4 == 0 and i // 4 < 50 * 20:
             # Ring user
             user_num = (i // 4) % 50
@@ -62,9 +63,11 @@ def seed():
             ring_review_counts[user_num] += 1
             user_ids.append(f"U{user_num:05d}")
         else:
-            # Normal user
-            user_num = 50 + (i % 150)
-            asin = asin_pool[50 + rng.randint(0, 149)]
+            # Normal user — each has their own exclusive slice of 10 products
+            user_idx = i % 110
+            user_num = 50 + user_idx
+            asin = asin_pool[50 + user_idx * 10 + (normal_review_counts[user_idx] % 10)]
+            normal_review_counts[user_idx] += 1
             user_ids.append(f"U{user_num:05d}")
         asins.append(asin)
 
