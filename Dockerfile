@@ -11,4 +11,4 @@ COPY . .
 
 EXPOSE 7860
 
-CMD ["sh", "-c", "python -m scripts.seed_demo && python -m pipeline.precompute && uvicorn backend.main:app --host 0.0.0.0 --port 7860"]
+CMD ["sh", "-c", "rm -f /app/data/trustscan.duckdb && python -m scripts.seed_demo && python -m pipeline.precompute && uvicorn backend.main:app --host 0.0.0.0 --port 7860"]
