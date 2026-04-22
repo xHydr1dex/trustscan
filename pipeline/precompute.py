@@ -60,13 +60,9 @@ def run_precompute():
     ring_suspect_users = {u for ring in suspected_rings for u in ring}
     print(f"  Suspected ring members: {len(ring_suspect_users):,} users\n")
 
-    # Stage 3+4+5: Confirm rings using profiler + ML + similarity
-    print("Stage 3-5: Confirming rings with profiler + ML + similarity...")
-    ring_df = df[df["user_id"].isin(ring_suspect_users)].copy()
-    confirmed_rings = confirm_rings_with_text(suspected_rings, ring_df)
-    confirmed_ring_members = {u for ring in confirmed_rings for u in ring}
-    print(f"  Confirmed rings: {len(confirmed_rings)}")
-    print(f"  Confirmed ring members: {len(confirmed_ring_members):,} users\n")
+    # Use structural rings directly — confirmation needs ChromaDB+Groq which may be unavailable
+    confirmed_ring_members = ring_suspect_users
+    print(f"  Ring members flagged: {len(confirmed_ring_members):,} users\n")
 
     # Assign ring_flagged
     df["ring_flagged"] = df["user_id"].isin(confirmed_ring_members)
