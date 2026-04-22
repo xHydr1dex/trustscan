@@ -9,8 +9,6 @@ RUN pip install --no-cache-dir -r requirements-deploy.txt
 
 COPY . .
 
-RUN python -m scripts.seed_demo
-
 EXPOSE 7860
 
-CMD ["uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "7860"]
+CMD ["sh", "-c", "python -m scripts.seed_demo && uvicorn backend.main:app --host 0.0.0.0 --port 7860"]
