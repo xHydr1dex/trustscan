@@ -26,7 +26,7 @@ def get_stats():
     con = duckdb.connect(DB_PATH, read_only=True)
     total = con.execute("SELECT COUNT(*) FROM reviews").fetchone()[0]
     flagged = con.execute("SELECT COUNT(*) FROM review_results WHERE trust_score < 0.7").fetchone()[0]
-    rings_count = con.execute("SELECT COUNT(DISTINCT user_id) FROM review_results WHERE ring_flagged = true").fetchone()[0]
+    rings_count = con.execute("SELECT COUNT(*) FROM review_results WHERE ring_flagged = true").fetchone()[0]
     processed = con.execute("SELECT COUNT(*) FROM review_results").fetchone()[0]
     con.close()
     return {
