@@ -77,7 +77,24 @@ def run_precompute():
     df["similarity_flagged"] = False  # will be set on-demand
     df["llm_flagged"] = False
     df["llm_explanation"] = ""
-    df["reviewer_risk"] = "unknown"
+
+    # Aggregate per-user signals to assign reviewer_risk
+    user_ring = df.groupby("user_id")["ring_flagged"].any()
+    user_rule = df.groupby("user_id")["rule_flagged"].sum()
+    user_ml = df.groupby("user_id")["ml_fake_prob"].mean()
+
+    def reviewer_risk(uid):
+        if user_ring.get(uid, False):
+            return "high"
+        rule_hits = user_rule.get(uid, 0)
+        ml_avg = user_ml.get(uid, 0.0)
+        if rule_hits >= 2 or ml_avg >= 0.65:
+            return "high"
+        if rule_hits == 1 or ml_avg >= 0.45:
+            return "medium"
+        return "low"
+
+    df["reviewer_risk"] = df["user_id"].map(reviewer_risk)
 
     # Compute trust scores
     print("Computing trust scores...")
