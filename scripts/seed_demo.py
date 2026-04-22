@@ -38,10 +38,13 @@ def seed():
     base_date = datetime.datetime(2022, 1, 1)
 
     df["review_id"] = df.index.map(lambda i: f"R{i:07d}")
-    df["asin"] = df["category"].apply(
-        lambda c: "B" + hashlib.md5(c.encode()).hexdigest()[:9].upper()
-    )
-    df["user_id"] = df.index.map(lambda i: f"U{(i % 300):05d}")
+    # 30 synthetic ASINs (2 categories × 15 subcategories) so users share ≥3 products
+    df["asin"] = [
+        "B" + hashlib.md5(f"{df.at[i,'category']}_{i % 15}".encode()).hexdigest()[:9].upper()
+        for i in df.index
+    ]
+    # 150 users so each user reviews ~40 products, guaranteeing shared-product rings
+    df["user_id"] = df.index.map(lambda i: f"U{(i % 150):05d}")
     df["review_text"] = df["text_"]
     # fake reviews (CG label) are unverified, genuine (OR label) are verified
     df["verified_purchase"] = df["label"].apply(lambda l: l == "OR")
