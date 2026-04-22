@@ -39,40 +39,69 @@ def seed():
 
     df["review_id"] = df.index.map(lambda i: f"R{i:07d}")
 
-    # 1600 products:
-    #   [0-49]   = ring products (10 groups × 5 products each)
-    #   [50-1149] = 110 normal users × 10 exclusive products each (no overlap)
-    asin_pool = ["B" + hashlib.md5(f"product_{k}".encode()).hexdigest()[:9].upper() for k in range(1600)]
+    rng = random.Random(42)
 
-    # Assign 160 random non-sequential user IDs so rings don't look synthetic
+    # 4 rings with varying sizes (4-6 members) and varying product counts (4-6 products)
+    # Each ring member writes 5-15 reviews on their ring's shared products
+    rings = [
+        {"size": 5, "products": 5, "reviews_each": [11, 8, 13, 7, 9]},
+        {"size": 4, "products": 4, "reviews_each": [6, 14, 9, 7]},
+        {"size": 6, "products": 5, "reviews_each": [8, 12, 5, 10, 13, 6]},
+        {"size": 4, "products": 6, "reviews_each": [9, 7, 11, 8]},
+    ]
+    total_ring_users = sum(r["size"] for r in rings)  # 19
+    normal_user_count = 120
+
+    # Random non-sequential user IDs for all users
     id_pool = list(range(10000, 99999))
-    random.shuffle(id_pool)
-    uid_map = [f"U{id_pool[k]:05d}" for k in range(160)]
-    # uid_map[0..49]   = ring users (10 groups of 5)
-    # uid_map[50..159] = normal users (110 with exclusive product slices)
+    rng.shuffle(id_pool)
+    uid_map = [f"U{id_pool[k]:05d}" for k in range(total_ring_users + normal_user_count)]
 
+    # Build ring review slots: (uid, asin)
+    asin_pool = ["B" + hashlib.md5(f"product_{k}".encode()).hexdigest()[:9].upper() for k in range(2000)]
+    ring_slots = []
+    uid_cursor = 0
+    asin_cursor = 0
+    for ring in rings:
+        ring_asins = asin_pool[asin_cursor: asin_cursor + ring["products"]]
+        asin_cursor += ring["products"]
+        for member_idx in range(ring["size"]):
+            uid = uid_map[uid_cursor]
+            uid_cursor += 1
+            for rev_num in range(ring["reviews_each"][member_idx]):
+                ring_slots.append((uid, ring_asins[rev_num % len(ring_asins)]))
+
+    # Normal users each get 10 exclusive products from the remaining pool
+    normal_asin_start = asin_cursor
+    normal_review_counts = [0] * normal_user_count
+
+    # Interleave ring slots randomly into the review stream
+    ring_idx = 0
+    rng.shuffle(ring_slots)
     user_ids = []
     asins = []
 
-    ring_review_counts = [0] * 50
-    normal_review_counts = [0] * 110
-
     for i in range(len(df)):
-        # Every 4th review (25%) comes from a ring user
-        if i % 4 == 0 and i // 4 < 50 * 20:
-            # Ring user
-            user_num = (i // 4) % 50
-            ring_group = user_num // 5
-            asin = asin_pool[ring_group * 5 + (ring_review_counts[user_num] % 5)]
-            ring_review_counts[user_num] += 1
-            user_ids.append(uid_map[user_num])
+        # Inject a ring review roughly every ~13th slot until ring_slots exhausted
+        if ring_idx < len(ring_slots) and rng.random() < len(ring_slots) / len(df):
+            uid, asin = ring_slots[ring_idx]
+            ring_idx += 1
         else:
-            # Normal user — each has their own exclusive slice of 10 products
-            user_idx = i % 110
-            asin = asin_pool[50 + user_idx * 10 + (normal_review_counts[user_idx] % 10)]
+            user_idx = i % normal_user_count
+            uid = uid_map[total_ring_users + user_idx]
+            asin = asin_pool[normal_asin_start + user_idx * 10 + (normal_review_counts[user_idx] % 10)]
             normal_review_counts[user_idx] += 1
-            user_ids.append(uid_map[50 + user_idx])
+        user_ids.append(uid)
         asins.append(asin)
+
+    # Append any remaining ring slots at the end
+    for uid, asin in ring_slots[ring_idx:]:
+        if len(user_ids) < len(df):
+            user_ids.append(uid)
+            asins.append(asin)
+
+    user_ids = user_ids[:len(df)]
+    asins = asins[:len(df)]
 
     df["user_id"] = user_ids
     df["asin"] = asins
