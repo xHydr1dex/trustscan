@@ -20,6 +20,13 @@ MODEL_PATH = str(Path(__file__).parent.parent / "data" / "classifier.joblib")
 
 
 def run_precompute():
+    con = duckdb.connect(DB_PATH)
+    already_done = con.execute("SELECT COUNT(*) FROM review_results").fetchone()[0]
+    con.close()
+    if already_done > 0:
+        print(f"Precompute already done ({already_done:,} results). Skipping.")
+        return
+
     print("=== TrustScan Precompute ===\n")
 
     # Train classifier if not already trained

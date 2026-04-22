@@ -59,10 +59,14 @@ def seed():
     con.execute("""
         CREATE TABLE IF NOT EXISTS review_results (
             review_id VARCHAR,
+            asin VARCHAR,
+            user_id VARCHAR,
             rule_flagged BOOLEAN DEFAULT FALSE,
             similarity_flagged BOOLEAN DEFAULT FALSE,
             ring_flagged BOOLEAN DEFAULT FALSE,
             llm_flagged BOOLEAN DEFAULT FALSE,
+            llm_explanation VARCHAR,
+            reviewer_risk VARCHAR,
             trust_score FLOAT DEFAULT 1.0,
             processed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
