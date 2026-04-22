@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: trustscan-api
+    env: python
+    region: oregon
+    plan: free
+    buildCommand: pip install -r requirements-deploy.txt
+    startCommand: python -m scripts.seed_demo && uvicorn backend.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: GROQ_API_KEY
+        sync: false
+      - key: PYTHONUNBUFFERED
+        value: "1"
+    disk:
+      name: trustscan-data
+      mountPath: /opt/render/project/src/data
+      sizeGB: 2
