@@ -38,12 +38,14 @@ def seed():
     base_date = datetime.datetime(2022, 1, 1)
 
     df["review_id"] = df.index.map(lambda i: f"R{i:07d}")
-    # 30 synthetic ASINs (2 categories × 15 subcategories) so users share ≥3 products
-    df["asin"] = [
-        "B" + hashlib.md5(f"{df.at[i,'category']}_{i % 15}".encode()).hexdigest()[:9].upper()
-        for i in df.index
-    ]
-    # 150 users so each user reviews ~40 products, guaranteeing shared-product rings
+
+    # 50 ASINs — every 5 consecutive rows share an ASIN, cycling through 50 products
+    # This decouples ASIN from user_id so groups of users share multiple products
+    asin_pool = ["B" + hashlib.md5(f"product_{k}".encode()).hexdigest()[:9].upper() for k in range(50)]
+    df["asin"] = [(asin_pool[(i // 5) % 50]) for i in df.index]
+
+    # 150 users — each user appears at rows i, i+150, i+300, ...
+    # Groups of 5 users (0-4, 5-9, ...) end up sharing the same 5 ASINs → natural rings
     df["user_id"] = df.index.map(lambda i: f"U{(i % 150):05d}")
     df["review_text"] = df["text_"]
     # fake reviews (CG label) are unverified, genuine (OR label) are verified
