@@ -39,14 +39,37 @@ def seed():
 
     df["review_id"] = df.index.map(lambda i: f"R{i:07d}")
 
-    # 50 ASINs — every 5 consecutive rows share an ASIN, cycling through 50 products
-    # This decouples ASIN from user_id so groups of users share multiple products
-    asin_pool = ["B" + hashlib.md5(f"product_{k}".encode()).hexdigest()[:9].upper() for k in range(50)]
-    df["asin"] = [(asin_pool[(i // 5) % 50]) for i in df.index]
+    # 200 products: first 50 are "ring products", rest are general
+    asin_pool = ["B" + hashlib.md5(f"product_{k}".encode()).hexdigest()[:9].upper() for k in range(200)]
 
-    # 150 users — each user appears at rows i, i+150, i+300, ...
-    # Groups of 5 users (0-4, 5-9, ...) end up sharing the same 5 ASINs → natural rings
-    df["user_id"] = df.index.map(lambda i: f"U{(i % 150):05d}")
+    # 200 users: first 50 are in 10 explicit rings (5 users each), rest are normal
+    # Ring users (U00000-U00049): each ring group shares exactly 5 ring products
+    # Normal users (U00050-U00199): review random general products
+    user_ids = []
+    asins = []
+    rng = random.Random(42)
+
+    ring_review_counts = [0] * 50
+    normal_review_counts = [0] * 150
+
+    for i in range(len(df)):
+        # Alternate: 1 ring review per 3 normal reviews
+        if i % 4 == 0 and i // 4 < 50 * 20:
+            # Ring user
+            user_num = (i // 4) % 50
+            ring_group = user_num // 5
+            asin = asin_pool[ring_group * 5 + (ring_review_counts[user_num] % 5)]
+            ring_review_counts[user_num] += 1
+            user_ids.append(f"U{user_num:05d}")
+        else:
+            # Normal user
+            user_num = 50 + (i % 150)
+            asin = asin_pool[50 + rng.randint(0, 149)]
+            user_ids.append(f"U{user_num:05d}")
+        asins.append(asin)
+
+    df["user_id"] = user_ids
+    df["asin"] = asins
     df["review_text"] = df["text_"]
     # fake reviews (CG label) are unverified, genuine (OR label) are verified
     df["verified_purchase"] = df["label"].apply(lambda l: l == "OR")
