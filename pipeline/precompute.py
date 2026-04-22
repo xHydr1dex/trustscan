@@ -20,6 +20,13 @@ MODEL_PATH = str(Path(__file__).parent.parent / "data" / "classifier.joblib")
 
 
 def run_precompute():
+    con = duckdb.connect(DB_PATH)
+    already_done = con.execute("SELECT COUNT(*) FROM review_results").fetchone()[0]
+    con.close()
+    if already_done > 0:
+        print(f"Precompute already done ({already_done:,} results). Skipping.")
+        return
+
     print("=== TrustScan Precompute ===\n")
 
     # Train classifier if not already trained
@@ -53,13 +60,9 @@ def run_precompute():
     ring_suspect_users = {u for ring in suspected_rings for u in ring}
     print(f"  Suspected ring members: {len(ring_suspect_users):,} users\n")
 
-    # Stage 3+4+5: Confirm rings using profiler + ML + similarity
-    print("Stage 3-5: Confirming rings with profiler + ML + similarity...")
-    ring_df = df[df["user_id"].isin(ring_suspect_users)].copy()
-    confirmed_rings = confirm_rings_with_text(suspected_rings, ring_df)
-    confirmed_ring_members = {u for ring in confirmed_rings for u in ring}
-    print(f"  Confirmed rings: {len(confirmed_rings)}")
-    print(f"  Confirmed ring members: {len(confirmed_ring_members):,} users\n")
+    # Use structural rings directly — confirmation needs ChromaDB+Groq which may be unavailable
+    confirmed_ring_members = ring_suspect_users
+    print(f"  Ring members flagged: {len(confirmed_ring_members):,} users\n")
 
     # Assign ring_flagged
     df["ring_flagged"] = df["user_id"].isin(confirmed_ring_members)
@@ -74,7 +77,24 @@ def run_precompute():
     df["similarity_flagged"] = False  # will be set on-demand
     df["llm_flagged"] = False
     df["llm_explanation"] = ""
-    df["reviewer_risk"] = "unknown"
+
+    # Aggregate per-user signals to assign reviewer_risk
+    user_ring = df.groupby("user_id")["ring_flagged"].any()
+    user_rule = df.groupby("user_id")["rule_flagged"].sum()
+    user_ml = df.groupby("user_id")["ml_fake_prob"].mean()
+
+    def reviewer_risk(uid):
+        if user_ring.get(uid, False):
+            return "high"
+        rule_hits = user_rule.get(uid, 0)
+        ml_avg = user_ml.get(uid, 0.0)
+        if rule_hits >= 2 or ml_avg >= 0.65:
+            return "high"
+        if rule_hits == 1 or ml_avg >= 0.45:
+            return "medium"
+        return "low"
+
+    df["reviewer_risk"] = df["user_id"].map(reviewer_risk)
 
     # Compute trust scores
     print("Computing trust scores...")

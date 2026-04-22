@@ -5,6 +5,7 @@ const links = [
   { href: "/platform", label: "Platform" },
   { href: "/seller", label: "Seller" },
   { href: "/shopper", label: "Shopper" },
+  { href: "/reviewer", label: "Reviewer" },
   { href: "/analyst", label: "Analyst" },
 ];
 
