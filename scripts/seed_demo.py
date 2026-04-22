@@ -52,7 +52,7 @@ def seed():
     """)
     con.execute("""
         CREATE OR REPLACE TABLE labeled_reviews AS
-        SELECT review_id::BIGINT AS review_id, category,
+        SELECT review_id, category,
                rating, label, review_text
         FROM df
     """)
