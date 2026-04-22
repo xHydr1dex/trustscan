@@ -57,42 +57,74 @@ def get_ring_members(df: pd.DataFrame, min_shared_products: int = MIN_SHARED_PRO
 def confirm_rings_with_text(
     rings: list[list[str]],
     df: pd.DataFrame,
-    llm_results: dict[str, dict] = None,
+    fake_proba_threshold: float = 0.6,
+    ring_similarity_threshold: float = None,
 ) -> list[list[str]]:
     """
-    Filter rings to only those corroborated by textual evidence.
-    A ring is confirmed if at least half its members have either:
-    - a near-duplicate review (is_ring_similar) OR
-    - high LLM confidence (>= RING_LLM_CONFIDENCE_THRESHOLD)
+    Confirm rings using 3-signal corroboration:
+    1. Reviewer profiler risk level (high = strong signal)
+    2. ML classifier fake probability >= fake_proba_threshold
+    3. Tight similarity (cosine distance <= RING_SIMILARITY_THRESHOLD)
 
-    llm_results: optional dict of {review_id: {"confidence": float, "llm_flagged": bool}}
+    A ring is confirmed if >= 50% of members pass at least 2 of the 3 signals.
     """
-    from pipeline.similarity import is_ring_similar
+    from pipeline.similarity import is_ring_similar, RING_SIMILARITY_THRESHOLD
+    from pipeline.reviewer_profiler import profile_reviewer
+    from pipeline.classifier import predict_fake_probability
+
+    if ring_similarity_threshold is None:
+        ring_similarity_threshold = RING_SIMILARITY_THRESHOLD
 
     confirmed = []
+
     for ring in rings:
-        ring_df = df[df["user_id"].isin(ring)]
-        corroborated = 0
+        ring_df = df[df["user_id"].isin(ring)].copy()
+        corroborated_members = 0
 
-        for _, row in ring_df.iterrows():
-            text = str(row.get("review_text", ""))
-            rid = str(row.get("review_id", ""))
+        # Signal 2: ML classifier on all ring member reviews
+        texts = ring_df["review_text"].fillna("").astype(str).tolist()
+        ratings = ring_df["rating"].fillna(3.0).tolist()
+        try:
+            fake_probs = predict_fake_probability(texts, ratings)
+        except Exception:
+            fake_probs = [0.0] * len(texts)
 
-            # Check LLM confidence first (cheaper if already computed)
-            if llm_results and rid in llm_results:
-                if llm_results[rid].get("confidence", 0) >= RING_LLM_CONFIDENCE_THRESHOLD:
-                    corroborated += 1
-                    continue
+        ring_df = ring_df.copy()
+        ring_df["fake_prob"] = fake_probs
 
-            # Fall back to tight similarity check
+        for user_id in ring:
+            user_reviews = ring_df[ring_df["user_id"] == user_id]
+            if user_reviews.empty:
+                continue
+
+            signals_fired = 0
+
+            # Signal 1: Reviewer profiler
             try:
-                if is_ring_similar(text, exclude_id=rid):
-                    corroborated += 1
+                profile = profile_reviewer(user_id, user_reviews.to_dict("records"))
+                if profile.get("risk_level") == "high":
+                    signals_fired += 1
             except Exception:
                 pass
 
-        # Confirm if at least half the ring members are corroborated
-        if corroborated >= max(1, len(ring) // 2):
+            # Signal 2: ML classifier (any review >= threshold)
+            user_fake_probs = user_reviews["fake_prob"].tolist()
+            if any(p >= fake_proba_threshold for p in user_fake_probs):
+                signals_fired += 1
+
+            # Signal 3: Tight similarity
+            for _, row in user_reviews.iterrows():
+                try:
+                    if is_ring_similar(str(row.get("review_text", "")), exclude_id=str(row.get("review_id", ""))):
+                        signals_fired += 1
+                        break
+                except Exception:
+                    pass
+
+            if signals_fired >= 2:
+                corroborated_members += 1
+
+        if corroborated_members >= max(1, len(ring) // 2):
             confirmed.append(ring)
 
     return confirmed
