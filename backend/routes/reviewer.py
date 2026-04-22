@@ -27,7 +27,9 @@ def get_reviewer_profile(user_id: str):
     profile = profile_reviewer(user_id, reviews.to_dict("records"))
     profile["review_count"] = len(reviews)
     profile["reviews"] = reviews[["asin", "rating", "review_text", "verified_purchase", "trust_score"]].fillna("").to_dict("records")
-    # Use precomputed risk if profiler returned unknown (no Groq key)
-    if profile.get("risk_level", "unknown") == "unknown" and not reviews.empty:
+    # Ring flagged always wins — precomputed signal is more reliable than LLM text analysis
+    if reviews["ring_flagged"].any():
+        profile["risk_level"] = "high"
+    elif profile.get("risk_level", "unknown") == "unknown":
         profile["risk_level"] = reviews["reviewer_risk"].iloc[0]
     return profile
