@@ -1,59 +1,70 @@
 """
 Seed demo data from the labeled CSV (no df_final.csv needed).
-Uses 6000 reviews — fast enough to run on Render startup (~8 min).
+Uses 6000 reviews — fast enough to run on startup (~5 seconds).
 Run: python -m scripts.seed_demo
 """
 import duckdb
-import chromadb
 import pandas as pd
+import hashlib
+import random
+import datetime
 from pathlib import Path
-from sentence_transformers import SentenceTransformer
 
 DATA_DIR = Path(__file__).parent.parent / "data"
 DB_PATH = DATA_DIR / "trustscan.duckdb"
-CHROMA_PATH = str(DATA_DIR / "chroma_db")
 LABELED_CSV = DATA_DIR / "fake_reviews_sample.csv"
 DEMO_ROWS = 6000
-BATCH_SIZE = 256
-EMBED_MODEL = "BAAI/bge-small-en-v1.5"
 
 
 def seed():
-    if DB_PATH.exists():
-        con = duckdb.connect(str(DB_PATH), read_only=True)
-        n = con.execute("SELECT COUNT(*) FROM reviews").fetchone()[0]
-        con.close()
-        if n > 0:
-            print(f"DuckDB already seeded ({n:,} reviews). Skipping.")
-            return
+    DATA_DIR.mkdir(exist_ok=True)
 
-    print(f"Seeding demo data from {LABELED_CSV} ({DEMO_ROWS} rows)…")
+    if DB_PATH.exists():
+        try:
+            con = duckdb.connect(str(DB_PATH), read_only=True)
+            n = con.execute("SELECT COUNT(*) FROM reviews").fetchone()[0]
+            con.close()
+            if n > 0:
+                print(f"DuckDB already seeded ({n:,} reviews). Skipping.")
+                return
+        except Exception:
+            pass
+
+    print(f"Seeding {DEMO_ROWS} demo reviews from labeled CSV…")
     df = pd.read_csv(LABELED_CSV, nrows=DEMO_ROWS)
     df = df.dropna(subset=["text_"]).reset_index(drop=True)
 
-    # Synthesize Amazon-like IDs for demo
-    import hashlib
+    random.seed(42)
+    base_date = datetime.datetime(2022, 1, 1)
+
     df["review_id"] = df.index.map(lambda i: f"R{i:07d}")
     df["asin"] = df["category"].apply(
         lambda c: "B" + hashlib.md5(c.encode()).hexdigest()[:9].upper()
     )
     df["user_id"] = df.index.map(lambda i: f"U{(i % 300):05d}")
     df["review_text"] = df["text_"]
-    df["verified_purchase"] = True
-    df["helpful_vote"] = 0
+    # fake reviews (CG label) are unverified, genuine (OR label) are verified
+    df["verified_purchase"] = df["label"].apply(lambda l: l == "OR")
+    df["helpful_vote"] = [random.randint(0, 10) for _ in range(len(df))]
+    df["reviewed_at"] = [
+        base_date + datetime.timedelta(
+            days=random.randint(0, 730),
+            hours=random.randint(0, 23)
+        )
+        for _ in range(len(df))
+    ]
 
     con = duckdb.connect(str(DB_PATH))
     con.execute("""
         CREATE OR REPLACE TABLE reviews AS
         SELECT review_id, rating, asin, asin AS parent_asin,
-               user_id, CURRENT_TIMESTAMP AS reviewed_at,
+               user_id, reviewed_at,
                helpful_vote, verified_purchase, review_text
         FROM df
     """)
     con.execute("""
         CREATE OR REPLACE TABLE labeled_reviews AS
-        SELECT review_id, category,
-               rating, label, review_text
+        SELECT review_id, category, rating, label, review_text
         FROM df
     """)
     con.execute("""
@@ -74,35 +85,6 @@ def seed():
     count = con.execute("SELECT COUNT(*) FROM reviews").fetchone()[0]
     con.close()
     print(f"DuckDB seeded: {count:,} reviews")
-
-    # Build ChromaDB embeddings
-    chroma_client = chromadb.PersistentClient(path=CHROMA_PATH)
-    collection = chroma_client.get_or_create_collection(
-        "reviews", metadata={"hnsw:space": "cosine"}
-    )
-    existing = collection.count()
-    if existing >= count:
-        print(f"ChromaDB already has {existing} vectors. Skipping.")
-        return
-
-    print("Building ChromaDB embeddings…")
-    model = SentenceTransformer(EMBED_MODEL)
-    texts = df["review_text"].fillna("").astype(str).tolist()
-    ids = df["review_id"].astype(str).tolist()
-
-    for i in range(0, len(texts), BATCH_SIZE):
-        batch_texts = texts[i : i + BATCH_SIZE]
-        batch_ids = ids[i : i + BATCH_SIZE]
-        vecs = model.encode(batch_texts, normalize_embeddings=True, show_progress_bar=False)
-        collection.add(
-            ids=batch_ids,
-            embeddings=vecs.tolist(),
-            documents=batch_texts,
-        )
-        if (i // BATCH_SIZE) % 5 == 0:
-            print(f"  {min(i + BATCH_SIZE, len(texts))}/{len(texts)} vectors")
-
-    print(f"ChromaDB seeded: {collection.count()} vectors")
 
 
 if __name__ == "__main__":
