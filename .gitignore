@@ -1,5 +1,7 @@
 # Data files (too large for git)
 data/df_final.csv
+data/fake_reviews_labeled.csv
+data/classifier.joblib
 data/trustscan.duckdb
 data/chroma_db/
 data/ingest.log
