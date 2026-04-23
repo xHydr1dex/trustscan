@@ -48,6 +48,26 @@ export async function getCategories() {
   return res.json();
 }
 
+export async function getOverviewStats() {
+  const res = await fetch(`${BASE_URL}/overview/stats`);
+  return res.json();
+}
+
+export async function getOverviewTimeline() {
+  const res = await fetch(`${BASE_URL}/overview/timeline`);
+  return res.json();
+}
+
+export async function getOverviewTopRisks() {
+  const res = await fetch(`${BASE_URL}/overview/top-risks`);
+  return res.json();
+}
+
+export async function getOverviewAlerts(limit = 8) {
+  const res = await fetch(`${BASE_URL}/overview/alerts?limit=${limit}`);
+  return res.json();
+}
+
 export async function sendChatMessage(question: string) {
   const res = await fetch(`${BASE_URL}/chat/`, {
     method: "POST",

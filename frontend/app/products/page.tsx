@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { BarChart3, Zap, ArrowLeft } from "lucide-react";
+import { Package, ArrowLeft, Zap } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from "recharts";
 import { TrustGauge } from "@/components/TrustGauge";
 import { FlagBadge } from "@/components/FlagBadge";
@@ -19,7 +19,7 @@ const NEU_INSET = {
 
 const trustColor = (s: number) => s >= 0.7 ? "#5BBF8F" : s >= 0.5 ? "#F5A623" : "#E85D4A";
 
-export default function SellerPage() {
+export default function ProductsPage() {
   const [categories, setCategories] = useState<any[]>([]);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [productList, setProductList] = useState<any[]>([]);
@@ -76,12 +76,12 @@ export default function SellerPage() {
     <div className="min-h-screen p-6 md:p-8 max-w-4xl mx-auto">
       <div className="flex items-center gap-3 mb-8">
         <div className="w-9 h-9 rounded-xl flex items-center justify-center"
-          style={{ background: "#F5A62322", boxShadow: "0 2px 8px #F5A62333" }}>
-          <BarChart3 className="w-4 h-4" style={{ color: "#F5A623" }} />
+          style={{ background: "#4A9FD422", boxShadow: "0 2px 8px #4A9FD433" }}>
+          <Package className="w-4 h-4" style={{ color: "#4A9FD4" }} />
         </div>
         <div>
-          <h1 className="text-xl font-semibold" style={{ color: "#2C1A0E" }}>Seller Dashboard</h1>
-          <p className="text-xs" style={{ color: "#8B6F5E" }}>Monitor your product&apos;s review health</p>
+          <h1 className="text-xl font-semibold" style={{ color: "#2C1A0E" }}>Products</h1>
+          <p className="text-xs" style={{ color: "#8B6F5E" }}>Browse by category and inspect review health</p>
         </div>
       </div>
 
@@ -103,7 +103,7 @@ export default function SellerPage() {
           ) : (
             <>
               <button onClick={() => { setActiveCategory(null); setProductList([]); }}
-                className="flex items-center gap-1.5 text-xs mb-4 transition-colors" style={{ color: "#8B6F5E" }}>
+                className="flex items-center gap-1.5 text-xs mb-4" style={{ color: "#8B6F5E" }}>
                 <ArrowLeft className="w-3.5 h-3.5" /> Back to categories
               </button>
               <p className="text-xs uppercase tracking-wider mb-3" style={{ color: "#B8A090" }}>{activeCategory}</p>
@@ -141,14 +141,14 @@ export default function SellerPage() {
       {summary && (
         <>
           <button onClick={() => { setSummary(null); setReviews([]); setDeepDone(false); }}
-            className="flex items-center gap-1.5 text-xs mb-4 transition-colors" style={{ color: "#8B6F5E" }}>
+            className="flex items-center gap-1.5 text-xs mb-4" style={{ color: "#8B6F5E" }}>
             <ArrowLeft className="w-3.5 h-3.5" /> Back to products
           </button>
 
           <div className="flex items-center gap-3 mb-6">
             <button onClick={handleDeepScan} disabled={deepLoading}
               className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all disabled:opacity-50"
-              style={{ background: "#7B6CF618", border: "1px solid #7B6CF630", color: "#7B6CF6", boxShadow: "0 2px 8px #7B6CF620" }}>
+              style={{ background: "#7B6CF618", border: "1px solid #7B6CF630", color: "#7B6CF6" }}>
               <Zap className={`w-4 h-4 ${deepLoading ? "animate-pulse" : ""}`} />
               {deepLoading ? "Running deep scan…" : "Deep Scan"}
             </button>
@@ -166,7 +166,7 @@ export default function SellerPage() {
               <p className="text-3xl font-bold" style={{ color: "#2C1A0E" }}>{summary.total_reviews}</p>
               <p className="text-xs mt-1" style={{ color: "#B8A090" }}>avg {summary.avg_rating}★</p>
             </div>
-            <div className="p-5" style={{ ...NEU_CARD, background: "#F4EDE4" }}>
+            <div className="p-5" style={NEU_CARD}>
               <p className="text-xs uppercase tracking-wider mb-2" style={{ color: "#E85D4A" }}>Flagged</p>
               <p className="text-3xl font-bold" style={{ color: "#E85D4A" }}>{summary.flagged_count ?? 0}</p>
               <p className="text-xs mt-1" style={{ color: "#B8A090" }}>
@@ -193,7 +193,7 @@ export default function SellerPage() {
 
           {flaggedReviews.length > 0 && (
             <div className="p-6" style={NEU_CARD}>
-              <p className="text-sm font-medium mb-4" style={{ color: "#2C1A0E" }}>Flagged Reviews to Watch</p>
+              <p className="text-sm font-medium mb-4" style={{ color: "#2C1A0E" }}>Flagged Reviews</p>
               <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
                 {flaggedReviews.slice(0, 20).map((r: any) => (
                   <div key={r.review_id} className="p-3 rounded-xl"

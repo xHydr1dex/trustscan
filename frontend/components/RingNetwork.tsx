@@ -48,11 +48,11 @@ export function RingNetwork({ rings, maxRings = 8 }: RingNetworkProps) {
     return result;
   }, [nodes, visible]);
 
-  const colors = ["#818cf8", "#f472b6", "#34d399", "#fbbf24", "#60a5fa", "#a78bfa", "#fb7185", "#4ade80"];
+  const colors = ["#E85D4A", "#7B6CF6", "#5BBF8F", "#F5A623", "#4A9FD4", "#B06AB3", "#F08070", "#7FD4AB"];
 
   if (rings.length === 0) {
     return (
-      <div className="flex items-center justify-center h-40 text-slate-500 text-sm">
+      <div className="flex items-center justify-center h-40 text-sm" style={{ color: "#B8A090" }}>
         No rings detected yet. Run precompute to detect rings.
       </div>
     );

@@ -3,18 +3,19 @@ interface FlagBadgeProps {
   active: boolean;
 }
 
-const config = {
-  rule: { label: "Rule", color: "bg-amber-500/15 text-amber-400 border-amber-500/30" },
-  similarity: { label: "Similar", color: "bg-sky-500/15 text-sky-400 border-sky-500/30" },
-  ring: { label: "Ring", color: "bg-violet-500/15 text-violet-400 border-violet-500/30" },
-  llm: { label: "LLM", color: "bg-red-500/15 text-red-400 border-red-500/30" },
+const config: Record<string, { label: string; bg: string; color: string; border: string }> = {
+  rule:       { label: "Rule",    bg: "#F5A62318", color: "#F5A623", border: "#F5A62330" },
+  similarity: { label: "Similar", bg: "#4A9FD418", color: "#4A9FD4", border: "#4A9FD430" },
+  ring:       { label: "Ring",    bg: "#E85D4A18", color: "#E85D4A", border: "#E85D4A30" },
+  llm:        { label: "LLM",     bg: "#7B6CF618", color: "#7B6CF6", border: "#7B6CF630" },
 };
 
 export function FlagBadge({ type, active }: FlagBadgeProps) {
   if (!active) return null;
-  const { label, color } = config[type];
+  const { label, bg, color, border } = config[type];
   return (
-    <span className={`text-xs px-2 py-0.5 rounded-full border font-medium ${color}`}>
+    <span className="text-xs px-2 py-0.5 rounded-full font-medium"
+      style={{ background: bg, color, border: `1px solid ${border}` }}>
       {label}
     </span>
   );
