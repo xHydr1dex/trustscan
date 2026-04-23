@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from backend.routes import product, reviewer, rings, chat
+from backend.routes import product, reviewer, rings, chat, products
 import duckdb
 from pathlib import Path
 
@@ -16,6 +16,7 @@ app.add_middleware(
 )
 
 app.include_router(product.router, prefix="/product", tags=["product"])
+app.include_router(products.router, prefix="/products", tags=["products"])
 app.include_router(reviewer.router, prefix="/reviewer", tags=["reviewer"])
 app.include_router(rings.router, prefix="/rings", tags=["rings"])
 app.include_router(chat.router, prefix="/chat", tags=["chat"])
