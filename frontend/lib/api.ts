@@ -17,6 +17,15 @@ export async function getProductSummary(asin: string) {
   return res.json();
 }
 
+export async function listReviewers(params: { risk?: string; ring?: boolean; sort?: string } = {}) {
+  const q = new URLSearchParams();
+  if (params.risk) q.set("risk", params.risk);
+  if (params.ring !== undefined) q.set("ring", String(params.ring));
+  if (params.sort) q.set("sort", params.sort);
+  const res = await fetch(`${BASE_URL}/reviewers/?${q}`);
+  return res.json();
+}
+
 export async function getReviewerProfile(userId: string) {
   const res = await fetch(`${BASE_URL}/reviewer/${userId}`);
   if (!res.ok) throw new Error("Reviewer not found");
