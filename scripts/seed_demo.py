@@ -117,6 +117,18 @@ def seed():
         for _ in range(len(df))
     ]
 
+    # Assign each unique ASIN a category deterministically
+    CATEGORIES = [
+        "Electronics", "Home & Kitchen", "Sports & Outdoors",
+        "Beauty & Personal Care", "Clothing & Apparel", "Books & Media"
+    ]
+    unique_asins = list(dict.fromkeys(asins))  # preserve order, deduplicate
+    asin_category = {
+        a: CATEGORIES[int(hashlib.md5(a.encode()).hexdigest(), 16) % len(CATEGORIES)]
+        for a in unique_asins
+    }
+    df["category_label"] = df["asin"].map(asin_category)
+
     con = duckdb.connect(str(DB_PATH))
     con.execute("""
         CREATE OR REPLACE TABLE reviews AS
@@ -125,6 +137,10 @@ def seed():
                helpful_vote, verified_purchase, review_text
         FROM df
     """)
+    # Products table for browsing
+    import pandas as _pd
+    products_df = _pd.DataFrame(list(asin_category.items()), columns=["asin", "category"])
+    con.execute("CREATE OR REPLACE TABLE products AS SELECT asin, category FROM products_df")
     con.execute("""
         CREATE OR REPLACE TABLE labeled_reviews AS
         SELECT review_id, category, rating, label, review_text

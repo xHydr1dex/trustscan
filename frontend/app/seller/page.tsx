@@ -1,41 +1,56 @@
 "use client";
-import { useState } from "react";
-import { BarChart3, Search, Zap } from "lucide-react";
+import { useState, useEffect } from "react";
+import { BarChart3, Zap, ArrowLeft } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from "recharts";
 import { TrustGauge } from "@/components/TrustGauge";
 import { FlagBadge } from "@/components/FlagBadge";
 import { Nav } from "@/components/Nav";
-import { getProductSummary, getProductReviews } from "@/lib/api";
+import { getProductSummary, getProductReviews, getProducts, getCategories } from "@/lib/api";
+
+const TRUST_COLOR = (s: number) => s >= 0.7 ? "text-emerald-400" : s >= 0.5 ? "text-amber-400" : "text-red-400";
 
 export default function SellerPage() {
+  const [categories, setCategories] = useState<any[]>([]);
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const [productList, setProductList] = useState<any[]>([]);
   const [asin, setAsin] = useState("");
   const [summary, setSummary] = useState<any>(null);
   const [reviews, setReviews] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [deepLoading, setDeepLoading] = useState(false);
   const [deepDone, setDeepDone] = useState(false);
-  const [error, setError] = useState("");
+  const [productsLoading, setProductsLoading] = useState(false);
 
-  async function handleSearch() {
-    if (!asin.trim()) return;
-    setLoading(true); setError(""); setSummary(null); setReviews([]); setDeepDone(false);
+  useEffect(() => {
+    getCategories().then(setCategories);
+  }, []);
+
+  async function handleCategoryClick(cat: string) {
+    setActiveCategory(cat); setProductsLoading(true);
+    const prods = await getProducts(cat);
+    setProductList(prods);
+    setProductsLoading(false);
+    setSummary(null); setReviews([]); setAsin(""); setDeepDone(false);
+  }
+
+  async function handleProductClick(selectedAsin: string) {
+    setAsin(selectedAsin); setLoading(true); setSummary(null); setReviews([]); setDeepDone(false);
     try {
       const [s, r] = await Promise.all([
-        getProductSummary(asin.trim()),
-        getProductReviews(asin.trim(), 100),
+        getProductSummary(selectedAsin),
+        getProductReviews(selectedAsin, 100),
       ]);
       setSummary(s); setReviews(r);
-    } catch { setError("Product not found."); }
+    } catch {}
     setLoading(false);
   }
 
   async function handleDeepScan() {
-    if (!asin.trim()) return;
+    if (!asin) return;
     setDeepLoading(true);
     try {
-      const r = await getProductReviews(asin.trim(), 100, true);
+      const r = await getProductReviews(asin, 100, true);
       setReviews(r);
-      // Recalculate summary from deep scan results directly
       const scores = r.map((rev: any) => rev.trust_score ?? 1);
       const flagged = r.filter((rev: any) => (rev.trust_score ?? 1) < 0.7).length;
       setSummary((prev: any) => ({
@@ -50,11 +65,7 @@ export default function SellerPage() {
 
   const genuine = reviews.filter(r => (r.trust_score ?? 1) >= 0.7).length;
   const suspicious = reviews.filter(r => (r.trust_score ?? 1) < 0.7).length;
-  const chartData = [
-    { name: "Genuine", count: genuine },
-    { name: "Suspicious", count: suspicious },
-  ];
-
+  const chartData = [{ name: "Genuine", count: genuine }, { name: "Suspicious", count: suspicious }];
   const flaggedReviews = reviews.filter(r => (r.trust_score ?? 1) < 0.7);
 
   return (
@@ -71,42 +82,77 @@ export default function SellerPage() {
           </div>
         </div>
 
-        <div className="flex gap-2 mb-4">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-            <input
-              className="w-full pl-9 pr-4 py-3 rounded-xl bg-slate-900 border border-slate-700 text-slate-100 text-sm placeholder:text-slate-500 focus:outline-none focus:border-amber-500/50 transition-colors"
-              placeholder="Enter your product ASIN"
-              value={asin}
-              onChange={e => setAsin(e.target.value)}
-              onKeyDown={e => e.key === "Enter" && handleSearch()}
-            />
-          </div>
-          <button onClick={handleSearch} disabled={loading}
-            className="px-5 py-3 rounded-xl bg-amber-600 hover:bg-amber-500 disabled:opacity-50 text-white text-sm font-medium transition-colors">
-            {loading ? "Analysing..." : "Analyse"}
-          </button>
-        </div>
-
-        {summary && (
-          <div className="flex items-center gap-3 mb-6">
-            <button
-              onClick={handleDeepScan}
-              disabled={deepLoading}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-violet-600/20 hover:bg-violet-600/30 border border-violet-500/30 hover:border-violet-500/50 text-violet-300 text-sm font-medium transition-all disabled:opacity-50"
-            >
-              <Zap className={`w-4 h-4 ${deepLoading ? "animate-pulse" : ""}`} />
-              {deepLoading ? "Running deep scan…" : "Deep Scan"}
-            </button>
-            {deepDone && <span className="text-xs text-violet-400">✓ Similarity + LLM signals applied</span>}
-            {!deepDone && !deepLoading && <span className="text-xs text-slate-500">Run similarity detection + LLM analysis on all reviews</span>}
-          </div>
+        {/* Category browser */}
+        {!summary && (
+          <>
+            {!activeCategory ? (
+              <>
+                <p className="text-xs text-slate-500 uppercase tracking-wider mb-3">Browse by category</p>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {categories.map((c: any) => (
+                    <button key={c.category} onClick={() => handleCategoryClick(c.category)}
+                      className="p-4 rounded-xl border border-slate-700 bg-slate-900/40 hover:border-amber-500/40 hover:bg-amber-500/5 text-left transition-all">
+                      <p className="text-sm font-medium text-slate-200">{c.category}</p>
+                      <p className="text-xs text-slate-500 mt-1">{c.product_count} products</p>
+                    </button>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <>
+                <button onClick={() => { setActiveCategory(null); setProductList([]); }}
+                  className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-slate-200 mb-4 transition-colors">
+                  <ArrowLeft className="w-3.5 h-3.5" /> Back to categories
+                </button>
+                <p className="text-xs text-slate-500 uppercase tracking-wider mb-3">{activeCategory}</p>
+                {productsLoading ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {[...Array(4)].map((_, i) => <div key={i} className="h-20 rounded-xl bg-slate-800 animate-pulse" />)}
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {productList.map((p: any) => (
+                      <button key={p.asin} onClick={() => handleProductClick(p.asin)}
+                        className="p-4 rounded-xl border border-slate-700 bg-slate-900/40 hover:border-amber-500/40 hover:bg-amber-500/5 text-left transition-all">
+                        <div className="flex items-center justify-between mb-1">
+                          <p className="text-xs font-mono text-slate-400">{p.asin}</p>
+                          <span className={`text-xs font-semibold ${TRUST_COLOR(p.avg_trust_score)}`}>
+                            {Math.round((p.avg_trust_score ?? 1) * 100)}/100
+                          </span>
+                        </div>
+                        <div className="flex gap-3 text-xs text-slate-500">
+                          <span>{p.review_count} reviews</span>
+                          <span>{p.avg_rating}★</span>
+                          {p.flagged_count > 0 && <span className="text-red-400">{p.flagged_count} flagged</span>}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
+          </>
         )}
 
-        {error && <div className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm">{error}</div>}
+        {loading && <div className="text-slate-400 text-sm animate-pulse mt-4">Loading product data…</div>}
 
         {summary && (
           <>
+            <button onClick={() => { setSummary(null); setReviews([]); setDeepDone(false); }}
+              className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-slate-200 mb-4 transition-colors">
+              <ArrowLeft className="w-3.5 h-3.5" /> Back to products
+            </button>
+
+            <div className="flex items-center gap-3 mb-6">
+              <button onClick={handleDeepScan} disabled={deepLoading}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-violet-600/20 hover:bg-violet-600/30 border border-violet-500/30 hover:border-violet-500/50 text-violet-300 text-sm font-medium transition-all disabled:opacity-50">
+                <Zap className={`w-4 h-4 ${deepLoading ? "animate-pulse" : ""}`} />
+                {deepLoading ? "Running deep scan…" : "Deep Scan"}
+              </button>
+              {deepDone && <span className="text-xs text-violet-400">✓ Similarity + LLM signals applied</span>}
+              {!deepDone && !deepLoading && <span className="text-xs text-slate-500">Run similarity + LLM analysis on all reviews</span>}
+            </div>
+
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
               <div className="col-span-1 rounded-2xl border border-slate-800 bg-slate-900/40 p-5 flex flex-col items-center justify-center">
                 <p className="text-xs text-slate-500 uppercase tracking-wider mb-2">Health Score</p>
@@ -133,13 +179,9 @@ export default function SellerPage() {
                   <BarChart data={chartData} barCategoryGap="40%">
                     <XAxis dataKey="name" tick={{ fill: "#94a3b8", fontSize: 12 }} axisLine={false} tickLine={false} />
                     <YAxis tick={{ fill: "#94a3b8", fontSize: 11 }} axisLine={false} tickLine={false} />
-                    <Tooltip
-                      contentStyle={{ background: "#1e293b", border: "1px solid #334155", borderRadius: 8, color: "#f1f5f9" }}
-                      cursor={{ fill: "rgba(255,255,255,0.03)" }}
-                    />
+                    <Tooltip contentStyle={{ background: "#1e293b", border: "1px solid #334155", borderRadius: 8, color: "#f1f5f9" }} cursor={{ fill: "rgba(255,255,255,0.03)" }} />
                     <Bar dataKey="count" radius={[6, 6, 0, 0]}>
-                      <Cell fill="#10b981" />
-                      <Cell fill="#ef4444" />
+                      <Cell fill="#10b981" /><Cell fill="#ef4444" />
                     </Bar>
                   </BarChart>
                 </ResponsiveContainer>

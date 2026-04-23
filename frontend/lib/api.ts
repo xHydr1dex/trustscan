@@ -28,6 +28,17 @@ export async function getRings(confirm = false) {
   return res.json();
 }
 
+export async function getProducts(category?: string) {
+  const url = category ? `${BASE_URL}/products/?category=${encodeURIComponent(category)}` : `${BASE_URL}/products/`;
+  const res = await fetch(url);
+  return res.json();
+}
+
+export async function getCategories() {
+  const res = await fetch(`${BASE_URL}/products/categories`);
+  return res.json();
+}
+
 export async function sendChatMessage(question: string) {
   const res = await fetch(`${BASE_URL}/chat/`, {
     method: "POST",
