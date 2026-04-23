@@ -35,6 +35,13 @@ export default function ShopperPage() {
     try {
       const r = await getProductReviews(asin.trim(), 30, true);
       setReviews(r);
+      const scores = r.map((rev: any) => rev.trust_score ?? 1);
+      const flagged = r.filter((rev: any) => (rev.trust_score ?? 1) < 0.7).length;
+      setSummary((prev: any) => ({
+        ...prev,
+        avg_trust_score: scores.length ? Math.round((scores.reduce((a: number, b: number) => a + b, 0) / scores.length) * 100) / 100 : prev.avg_trust_score,
+        flagged_count: flagged,
+      }));
       setDeepDone(true);
     } catch {}
     setDeepLoading(false);
