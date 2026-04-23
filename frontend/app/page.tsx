@@ -72,11 +72,12 @@ const SIGNAL_COLORS: Record<string, string> = {
 };
 
 export default function OverviewPage() {
-  const [stats, setStats]     = useState<any>(null);
+  const [stats, setStats]       = useState<any>({});
   const [timeline, setTimeline] = useState<any[]>([]);
-  const [topRisks, setTopRisks] = useState<any>(null);
-  const [alerts, setAlerts]   = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [topRisks, setTopRisks] = useState<any>({});
+  const [alerts, setAlerts]     = useState<any[]>([]);
+  const [loading, setLoading]   = useState(true);
+  const [error, setError]       = useState(false);
 
   useEffect(() => {
     Promise.all([
@@ -85,11 +86,14 @@ export default function OverviewPage() {
       getOverviewTopRisks(),
       getOverviewAlerts(6),
     ]).then(([s, t, r, a]) => {
-      setStats(s);
-      setTimeline(t);
-      setTopRisks(r);
-      setAlerts(a);
+      setStats(s ?? {});
+      setTimeline(Array.isArray(t) ? t : []);
+      setTopRisks(r ?? {});
+      setAlerts(Array.isArray(a) ? a : []);
       setLoading(false);
+    }).catch(() => {
+      setLoading(false);
+      setError(true);
     });
   }, []);
 
@@ -105,6 +109,20 @@ export default function OverviewPage() {
           <div className="col-span-2 h-64 rounded-2xl animate-pulse" style={{ background: "#EDE6DC" }} />
           <div className="h-64 rounded-2xl animate-pulse" style={{ background: "#EDE6DC" }} />
         </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-8 flex flex-col items-center justify-center min-h-[60vh] gap-3">
+        <p className="text-lg font-semibold" style={{ color: "#2C1A0E" }}>Backend unavailable</p>
+        <p className="text-sm" style={{ color: "#8B6F5E" }}>Could not connect to the API. Make sure the backend is running.</p>
+        <button onClick={() => { setError(false); setLoading(true); }}
+          className="mt-2 px-4 py-2 rounded-xl text-sm font-medium"
+          style={{ background: "#E85D4A", color: "white", boxShadow: "0 4px 12px rgba(232,93,74,0.3)" }}>
+          Retry
+        </button>
       </div>
     );
   }
@@ -125,34 +143,34 @@ export default function OverviewPage() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <StatCard
           label="Reviews Scanned"
-          value={stats.total_reviews.toLocaleString()}
+          value={(stats.total_reviews ?? 0).toLocaleString()}
           icon={Star}
           color="#7B6CF6"
         />
         <StatCard
           label="Suspicious Reviews"
-          value={stats.suspicious_reviews.toLocaleString()}
-          sub={`${((stats.suspicious_reviews / stats.total_reviews) * 100).toFixed(1)}% of total`}
+          value={(stats.suspicious_reviews ?? 0).toLocaleString()}
+          sub={stats.total_reviews ? `${(((stats.suspicious_reviews ?? 0) / stats.total_reviews) * 100).toFixed(1)}% of total` : undefined}
           icon={AlertTriangle}
           color="#E85D4A"
-          trend={stats.pct_suspicious > 0 ? "up" : "down"}
-          trendVal={stats.pct_suspicious}
+          trend={(stats.pct_suspicious ?? 0) > 0 ? "up" : "down"}
+          trendVal={stats.pct_suspicious ?? 0}
         />
         <StatCard
           label="Reviewers Flagged"
-          value={stats.reviewers_flagged.toLocaleString()}
+          value={(stats.reviewers_flagged ?? 0).toLocaleString()}
           icon={Users}
           color="#F5A623"
-          trend={stats.pct_ring > 0 ? "up" : "down"}
-          trendVal={stats.pct_ring}
+          trend={(stats.pct_ring ?? 0) > 0 ? "up" : "down"}
+          trendVal={stats.pct_ring ?? 0}
         />
         <StatCard
           label="Products Affected"
-          value={stats.products_affected.toLocaleString()}
+          value={(stats.products_affected ?? 0).toLocaleString()}
           icon={Package}
           color="#4A9FD4"
-          trend={stats.pct_products > 0 ? "up" : "down"}
-          trendVal={stats.pct_products}
+          trend={(stats.pct_products ?? 0) > 0 ? "up" : "down"}
+          trendVal={stats.pct_products ?? 0}
         />
       </div>
 
