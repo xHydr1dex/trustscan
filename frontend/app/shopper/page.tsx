@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { ShoppingBag, Search, ChevronDown, ChevronUp } from "lucide-react";
+import { ShoppingBag, Search, ChevronDown, ChevronUp, Zap } from "lucide-react";
 import { TrustGauge } from "@/components/TrustGauge";
 import { FlagBadge } from "@/components/FlagBadge";
 import { Nav } from "@/components/Nav";
@@ -11,12 +11,14 @@ export default function ShopperPage() {
   const [summary, setSummary] = useState<any>(null);
   const [reviews, setReviews] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [deepLoading, setDeepLoading] = useState(false);
+  const [deepDone, setDeepDone] = useState(false);
   const [error, setError] = useState("");
   const [expanded, setExpanded] = useState<string | null>(null);
 
   async function handleSearch() {
     if (!asin.trim()) return;
-    setLoading(true); setError(""); setSummary(null); setReviews([]);
+    setLoading(true); setError(""); setSummary(null); setReviews([]); setDeepDone(false);
     try {
       const [s, r] = await Promise.all([
         getProductSummary(asin.trim()),
@@ -25,6 +27,17 @@ export default function ShopperPage() {
       setSummary(s); setReviews(r);
     } catch { setError("Product not found. Check the ASIN and try again."); }
     setLoading(false);
+  }
+
+  async function handleDeepScan() {
+    if (!asin.trim()) return;
+    setDeepLoading(true);
+    try {
+      const r = await getProductReviews(asin.trim(), 30, true);
+      setReviews(r);
+      setDeepDone(true);
+    } catch {}
+    setDeepLoading(false);
   }
 
   return (
@@ -64,6 +77,21 @@ export default function ShopperPage() {
 
         {error && (
           <div className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm">{error}</div>
+        )}
+
+        {summary && (
+          <div className="flex items-center gap-3 mb-4">
+            <button
+              onClick={handleDeepScan}
+              disabled={deepLoading}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-violet-600/20 hover:bg-violet-600/30 border border-violet-500/30 hover:border-violet-500/50 text-violet-300 text-sm font-medium transition-all disabled:opacity-50"
+            >
+              <Zap className={`w-4 h-4 ${deepLoading ? "animate-pulse" : ""}`} />
+              {deepLoading ? "Running deep scan…" : "Deep Scan"}
+            </button>
+            {deepDone && <span className="text-xs text-violet-400">✓ Similarity + LLM signals applied</span>}
+            {!deepDone && !deepLoading && <span className="text-xs text-slate-500">Run LLM analysis on each review</span>}
+          </div>
         )}
 
         {summary && (

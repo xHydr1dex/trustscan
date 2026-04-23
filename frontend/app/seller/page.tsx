@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { BarChart3, Search } from "lucide-react";
+import { BarChart3, Search, Zap } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from "recharts";
 import { TrustGauge } from "@/components/TrustGauge";
 import { FlagBadge } from "@/components/FlagBadge";
@@ -12,11 +12,13 @@ export default function SellerPage() {
   const [summary, setSummary] = useState<any>(null);
   const [reviews, setReviews] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [deepLoading, setDeepLoading] = useState(false);
+  const [deepDone, setDeepDone] = useState(false);
   const [error, setError] = useState("");
 
   async function handleSearch() {
     if (!asin.trim()) return;
-    setLoading(true); setError(""); setSummary(null); setReviews([]);
+    setLoading(true); setError(""); setSummary(null); setReviews([]); setDeepDone(false);
     try {
       const [s, r] = await Promise.all([
         getProductSummary(asin.trim()),
@@ -25,6 +27,19 @@ export default function SellerPage() {
       setSummary(s); setReviews(r);
     } catch { setError("Product not found."); }
     setLoading(false);
+  }
+
+  async function handleDeepScan() {
+    if (!asin.trim()) return;
+    setDeepLoading(true);
+    try {
+      const r = await getProductReviews(asin.trim(), 100, true);
+      setReviews(r);
+      const s = await getProductSummary(asin.trim());
+      setSummary(s);
+      setDeepDone(true);
+    } catch {}
+    setDeepLoading(false);
   }
 
   const genuine = reviews.filter(r => (r.trust_score ?? 1) >= 0.7).length;
@@ -50,7 +65,7 @@ export default function SellerPage() {
           </div>
         </div>
 
-        <div className="flex gap-2 mb-8">
+        <div className="flex gap-2 mb-4">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
             <input
@@ -66,6 +81,21 @@ export default function SellerPage() {
             {loading ? "Analysing..." : "Analyse"}
           </button>
         </div>
+
+        {summary && (
+          <div className="flex items-center gap-3 mb-6">
+            <button
+              onClick={handleDeepScan}
+              disabled={deepLoading}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-violet-600/20 hover:bg-violet-600/30 border border-violet-500/30 hover:border-violet-500/50 text-violet-300 text-sm font-medium transition-all disabled:opacity-50"
+            >
+              <Zap className={`w-4 h-4 ${deepLoading ? "animate-pulse" : ""}`} />
+              {deepLoading ? "Running deep scan…" : "Deep Scan"}
+            </button>
+            {deepDone && <span className="text-xs text-violet-400">✓ Similarity + LLM signals applied</span>}
+            {!deepDone && !deepLoading && <span className="text-xs text-slate-500">Run similarity detection + LLM analysis on all reviews</span>}
+          </div>
+        )}
 
         {error && <div className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm">{error}</div>}
 
