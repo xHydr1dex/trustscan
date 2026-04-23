@@ -34,15 +34,18 @@ def get_product_reviews(asin: str, limit: int = 50, offset: int = 0, deep: bool 
         raise HTTPException(status_code=404, detail=f"Product {asin} not found")
 
     if deep:
-        # Run similarity + LLM on-demand for this batch
-        sim_flags = flag_similar_in_batch(
-            rows["review_id"].tolist(),
-            rows["review_text"].fillna("").tolist()
-        )
+        from sentence_transformers import SentenceTransformer
+        import numpy as np
+        model = SentenceTransformer("BAAI/bge-small-en-v1.5")
+        texts = rows["review_text"].fillna("").tolist()
+        embeddings = model.encode(texts, normalize_embeddings=True, show_progress_bar=False)
+        sim_matrix = np.dot(embeddings, embeddings.T)
+        THRESHOLD = 0.92
         for idx, row in rows.iterrows():
-            sim = sim_flags.get(row["review_id"], False)
-            rows.at[idx, "similarity_flagged"] = sim
-            if sim and not row["llm_flagged"]:
+            i = rows.index.get_loc(idx)
+            similar = any(sim_matrix[i][j] >= THRESHOLD for j in range(len(texts)) if j != i)
+            rows.at[idx, "similarity_flagged"] = similar
+            if (similar or row["rule_flagged"] or row["ring_flagged"]) and not row["llm_flagged"]:
                 result = judge_review(
                     review_text=row["review_text"],
                     rating=row["rating"],
