@@ -1,4 +1,4 @@
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://xhydr1dex-trustscan-api.hf.space";
 
 async function fetchJson(url: string, options?: RequestInit) {
   const res = await fetch(url, options);

@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Shield, LayoutDashboard, Star, Users, Package, BarChart3, MessageSquare, Bell } from "lucide-react";
+import { Shield, LayoutDashboard, Star, Users, Package, BarChart3, MessageSquare, Bell, FileText, Settings } from "lucide-react";
 
 const NAV = [
   { href: "/",          icon: LayoutDashboard, label: "Overview" },
@@ -10,6 +10,9 @@ const NAV = [
   { href: "/products",  icon: Package,         label: "Products" },
   { href: "/platform",  icon: BarChart3,       label: "Analytics" },
   { href: "/analyst",   icon: MessageSquare,   label: "AI Analyst" },
+  { href: "/alerts",    icon: Bell,            label: "Alerts" },
+  { href: "/reports",   icon: FileText,        label: "Reports" },
+  { href: "/settings",  icon: Settings,        label: "Settings" },
 ];
 
 export function Sidebar() {
