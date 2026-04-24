@@ -132,11 +132,10 @@ export default function OverviewPage() {
   const [timeline, setTimeline] = useState<any[]>(DEMO_TIMELINE);
   const [topRisks, setTopRisks] = useState<any>(DEMO_TOP_RISKS);
   const [alerts,   setAlerts]   = useState<any[]>(DEMO_ALERTS);
-  const [loading,  setLoading]  = useState(true);
-  const [offline,  setOffline]  = useState(false);
+  const [status,   setStatus]   = useState<"connecting" | "live" | "demo">("connecting");
 
   function load() {
-    setLoading(true);
+    setStatus("connecting");
     Promise.all([
       getOverviewStats(),
       getOverviewTimeline(),
@@ -147,14 +146,10 @@ export default function OverviewPage() {
       setTimeline(Array.isArray(t) && t.length ? t : DEMO_TIMELINE);
       setTopRisks(r ?? DEMO_TOP_RISKS);
       setAlerts(Array.isArray(a) && a.length ? a : DEMO_ALERTS);
-      setOffline(false);
+      setStatus("live");
     }).catch(() => {
-      setStats(DEMO_STATS);
-      setTimeline(DEMO_TIMELINE);
-      setTopRisks(DEMO_TOP_RISKS);
-      setAlerts(DEMO_ALERTS);
-      setOffline(true);
-    }).finally(() => setLoading(false));
+      setStatus("demo");
+    });
   }
 
   useEffect(() => { load(); }, []);
@@ -180,17 +175,25 @@ export default function OverviewPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          {offline && (
+          {status === "connecting" && (
             <span className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full font-medium"
-              style={{ background: "rgba(255,181,71,0.15)", border: "1px solid rgba(255,181,71,0.3)", color: "#FFB547" }}>
-              <span className="w-1.5 h-1.5 rounded-full bg-yellow-400 animate-pulse inline-block" />
-              Demo data
+              style={{ background: "rgba(167,139,250,0.12)", border: "1px solid rgba(167,139,250,0.25)", color: "#A78BFA" }}>
+              <span className="w-1.5 h-1.5 rounded-full inline-block animate-pulse" style={{ background: "#A78BFA" }} />
+              Connecting…
             </span>
           )}
-          {loading && !offline && (
-            <span className="text-xs px-3 py-1.5 rounded-full animate-pulse"
-              style={{ background: "rgba(167,139,250,0.1)", color: "#A78BFA" }}>
-              Loading…
+          {status === "demo" && (
+            <span className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full font-medium"
+              style={{ background: "rgba(255,181,71,0.12)", border: "1px solid rgba(255,181,71,0.25)", color: "#FFB547" }}>
+              <span className="w-1.5 h-1.5 rounded-full inline-block animate-pulse" style={{ background: "#FFB547" }} />
+              Demo data · <button onClick={load} className="underline underline-offset-2">retry</button>
+            </span>
+          )}
+          {status === "live" && (
+            <span className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full font-medium"
+              style={{ background: "rgba(78,205,196,0.12)", border: "1px solid rgba(78,205,196,0.25)", color: "#4ECDC4" }}>
+              <span className="w-1.5 h-1.5 rounded-full inline-block" style={{ background: "#4ECDC4" }} />
+              Live
             </span>
           )}
           <button onClick={load}

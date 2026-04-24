@@ -1,9 +1,18 @@
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://xhydr1dex-trustscan-api.hf.space";
 
-async function fetchJson(url: string, options?: RequestInit) {
-  const res = await fetch(url, options);
-  if (!res.ok) throw new Error(`HTTP ${res.status}: ${url}`);
-  return res.json();
+// HF free-tier spaces take up to 90s to wake. Retry up to 4 times with backoff.
+async function fetchJson(url: string, options?: RequestInit, attempt = 0): Promise<any> {
+  try {
+    const res = await fetch(url, { ...options, signal: AbortSignal.timeout(20000) });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return res.json();
+  } catch (err) {
+    if (attempt < 3) {
+      await new Promise(r => setTimeout(r, (attempt + 1) * 8000));
+      return fetchJson(url, options, attempt + 1);
+    }
+    throw err;
+  }
 }
 
 export async function getStats() {
