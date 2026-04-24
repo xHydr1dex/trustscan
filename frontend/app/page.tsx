@@ -160,7 +160,9 @@ export default function OverviewPage() {
   const products  = stats.products_affected  ?? 0;
 
   const signalEntries = topRisks?.signal_breakdown
-    ? Object.entries(topRisks.signal_breakdown as Record<string, number>).map(([name, count]) => ({ name, count }))
+    ? Object.entries(topRisks.signal_breakdown as Record<string, number>)
+        .map(([name, count]) => ({ name, count }))
+        .filter(e => (e.count as number) > 0)
     : [];
   const totalRisks = signalEntries.reduce((s, e) => s + (e.count as number), 0);
 
@@ -272,7 +274,7 @@ export default function OverviewPage() {
                   cursor={{ stroke: "#7C3AED", strokeWidth: 1, strokeDasharray: "4 4" }}
                   labelFormatter={(v: unknown) => `Week of ${v}`}
                 />
-                <Area type="monotone" dataKey="flagged" stroke="#A78BFA" strokeWidth={2.5} fill="url(#aGrad)" dot={false} activeDot={{ r: 5, fill: "#A78BFA", strokeWidth: 0 }} />
+                <Area type="basis" dataKey="flagged" stroke="#A78BFA" strokeWidth={2.5} fill="url(#aGrad)" dot={false} activeDot={{ r: 5, fill: "#A78BFA", strokeWidth: 0 }} />
               </AreaChart>
             </ResponsiveContainer>
           </div>
