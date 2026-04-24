@@ -1,20 +1,21 @@
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
-export async function getStats() {
-  const res = await fetch(`${BASE_URL}/stats`);
+async function fetchJson(url: string, options?: RequestInit) {
+  const res = await fetch(url, options);
+  if (!res.ok) throw new Error(`HTTP ${res.status}: ${url}`);
   return res.json();
+}
+
+export async function getStats() {
+  return fetchJson(`${BASE_URL}/stats`);
 }
 
 export async function getProductReviews(asin: string, limit = 50, deep = false) {
-  const res = await fetch(`${BASE_URL}/product/${asin}?limit=${limit}&deep=${deep}`);
-  if (!res.ok) throw new Error("Product not found");
-  return res.json();
+  return fetchJson(`${BASE_URL}/product/${asin}?limit=${limit}&deep=${deep}`);
 }
 
 export async function getProductSummary(asin: string) {
-  const res = await fetch(`${BASE_URL}/product/${asin}/summary`);
-  if (!res.ok) throw new Error("Product not found");
-  return res.json();
+  return fetchJson(`${BASE_URL}/product/${asin}/summary`);
 }
 
 export async function listReviewers(params: { risk?: string; ring?: boolean; sort?: string } = {}) {
@@ -22,57 +23,48 @@ export async function listReviewers(params: { risk?: string; ring?: boolean; sor
   if (params.risk) q.set("risk", params.risk);
   if (params.ring !== undefined) q.set("ring", String(params.ring));
   if (params.sort) q.set("sort", params.sort);
-  const res = await fetch(`${BASE_URL}/reviewers/?${q}`);
-  return res.json();
+  return fetchJson(`${BASE_URL}/reviewers/?${q}`);
 }
 
 export async function getReviewerProfile(userId: string) {
-  const res = await fetch(`${BASE_URL}/reviewer/${userId}`);
-  if (!res.ok) throw new Error("Reviewer not found");
-  return res.json();
+  return fetchJson(`${BASE_URL}/reviewer/${userId}`);
 }
 
 export async function getRings(confirm = false) {
-  const res = await fetch(`${BASE_URL}/rings/?confirm=${confirm}`);
-  return res.json();
+  return fetchJson(`${BASE_URL}/rings/?confirm=${confirm}`);
 }
 
 export async function getProducts(category?: string) {
-  const url = category ? `${BASE_URL}/products/?category=${encodeURIComponent(category)}` : `${BASE_URL}/products/`;
-  const res = await fetch(url);
-  return res.json();
+  const url = category
+    ? `${BASE_URL}/products/?category=${encodeURIComponent(category)}`
+    : `${BASE_URL}/products/`;
+  return fetchJson(url);
 }
 
 export async function getCategories() {
-  const res = await fetch(`${BASE_URL}/products/categories`);
-  return res.json();
+  return fetchJson(`${BASE_URL}/products/categories`);
 }
 
 export async function getOverviewStats() {
-  const res = await fetch(`${BASE_URL}/overview/stats`);
-  return res.json();
+  return fetchJson(`${BASE_URL}/overview/stats`);
 }
 
 export async function getOverviewTimeline() {
-  const res = await fetch(`${BASE_URL}/overview/timeline`);
-  return res.json();
+  return fetchJson(`${BASE_URL}/overview/timeline`);
 }
 
 export async function getOverviewTopRisks() {
-  const res = await fetch(`${BASE_URL}/overview/top-risks`);
-  return res.json();
+  return fetchJson(`${BASE_URL}/overview/top-risks`);
 }
 
 export async function getOverviewAlerts(limit = 8) {
-  const res = await fetch(`${BASE_URL}/overview/alerts?limit=${limit}`);
-  return res.json();
+  return fetchJson(`${BASE_URL}/overview/alerts?limit=${limit}`);
 }
 
 export async function sendChatMessage(question: string) {
-  const res = await fetch(`${BASE_URL}/chat/`, {
+  return fetchJson(`${BASE_URL}/chat/`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ question }),
   });
-  return res.json();
 }

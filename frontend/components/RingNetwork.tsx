@@ -48,11 +48,11 @@ export function RingNetwork({ rings, maxRings = 8 }: RingNetworkProps) {
     return result;
   }, [nodes, visible]);
 
-  const colors = ["#E85D4A", "#7B6CF6", "#5BBF8F", "#F5A623", "#4A9FD4", "#B06AB3", "#F08070", "#7FD4AB"];
+  const colors = ["#FF6B6B", "#A78BFA", "#4ECDC4", "#FFB547", "#60A5FA", "#F472B6", "#FB923C", "#34D399"];
 
   if (rings.length === 0) {
     return (
-      <div className="flex items-center justify-center h-40 text-sm" style={{ color: "#B8A090" }}>
+      <div className="flex items-center justify-center h-40 text-sm" style={{ color: "rgba(255,255,255,0.3)" }}>
         No rings detected yet. Run precompute to detect rings.
       </div>
     );
@@ -63,11 +63,11 @@ export function RingNetwork({ rings, maxRings = 8 }: RingNetworkProps) {
       <svg width={W} height={H} className="w-full">
         {edges.map((e, i) => (
           <line key={i} x1={e.x1} y1={e.y1} x2={e.x2} y2={e.y2}
-            stroke={colors[e.ring % colors.length]} strokeOpacity={0.25} strokeWidth={1} />
+            stroke={colors[e.ring % colors.length]} strokeOpacity={0.3} strokeWidth={1} />
         ))}
         {nodes.map((n, i) => (
           <g key={i}>
-            <circle cx={n.x} cy={n.y} r={5} fill={colors[n.ring % colors.length]} fillOpacity={0.85} />
+            <circle cx={n.x} cy={n.y} r={5} fill={colors[n.ring % colors.length]} fillOpacity={0.9} />
             <title>{n.id}</title>
           </g>
         ))}

@@ -4,10 +4,10 @@ interface FlagBadgeProps {
 }
 
 const config: Record<string, { label: string; bg: string; color: string; border: string }> = {
-  rule:       { label: "Rule",    bg: "#F5A62318", color: "#F5A623", border: "#F5A62330" },
-  similarity: { label: "Similar", bg: "#4A9FD418", color: "#4A9FD4", border: "#4A9FD430" },
-  ring:       { label: "Ring",    bg: "#E85D4A18", color: "#E85D4A", border: "#E85D4A30" },
-  llm:        { label: "LLM",     bg: "#7B6CF618", color: "#7B6CF6", border: "#7B6CF630" },
+  rule:       { label: "Rule",    bg: "rgba(255,181,71,0.15)",  color: "#FFB547", border: "rgba(255,181,71,0.3)" },
+  similarity: { label: "Similar", bg: "rgba(96,165,250,0.15)",  color: "#60A5FA", border: "rgba(96,165,250,0.3)" },
+  ring:       { label: "Ring",    bg: "rgba(255,107,107,0.15)", color: "#FF6B6B", border: "rgba(255,107,107,0.3)" },
+  llm:        { label: "LLM",     bg: "rgba(167,139,250,0.15)", color: "#A78BFA", border: "rgba(167,139,250,0.3)" },
 };
 
 export function FlagBadge({ type, active }: FlagBadgeProps) {

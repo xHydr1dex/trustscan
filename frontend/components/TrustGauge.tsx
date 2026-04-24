@@ -13,7 +13,7 @@ export function TrustGauge({ score, size = 120 }: TrustGaugeProps) {
   const offset = arc - arc * pct;
   const rotation = 135;
 
-  const color = pct > 0.7 ? "#5BBF8F" : pct > 0.4 ? "#F5A623" : "#E85D4A";
+  const color = pct > 0.7 ? "#4ECDC4" : pct > 0.4 ? "#FFB547" : "#FF6B6B";
   const label = pct > 0.7 ? "Genuine" : pct > 0.4 ? "Uncertain" : "Suspicious";
 
   return (
@@ -22,7 +22,7 @@ export function TrustGauge({ score, size = 120 }: TrustGaugeProps) {
         <circle
           cx={cx} cy={cy} r={radius}
           fill="none"
-          stroke="rgba(166,134,110,0.2)"
+          stroke="rgba(255,255,255,0.1)"
           strokeWidth="8"
           strokeDasharray={`${arc} ${circumference}`}
           strokeDashoffset={0}
@@ -43,7 +43,7 @@ export function TrustGauge({ score, size = 120 }: TrustGaugeProps) {
         <text x={cx} y={cy - 4} textAnchor="middle" fill={color} fontSize="20" fontWeight="bold">
           {Math.round(pct * 100)}
         </text>
-        <text x={cx} y={cy + 14} textAnchor="middle" fill="#B8A090" fontSize="9">
+        <text x={cx} y={cy + 14} textAnchor="middle" fill="rgba(255,255,255,0.35)" fontSize="9">
           / 100
         </text>
       </svg>
