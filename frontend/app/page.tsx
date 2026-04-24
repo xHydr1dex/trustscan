@@ -6,8 +6,7 @@ import {
   PieChart, Pie, Cell,
 } from "recharts";
 import {
-  Star, Users, Package, AlertTriangle, TrendingUp, TrendingDown,
-  RefreshCw, Bell, User, ArrowUpRight, ArrowDownRight,
+  Star, Users, Package, AlertTriangle, RefreshCw, Bell, User, ArrowUpRight, ArrowDownRight,
 } from "lucide-react";
 import { getOverviewStats, getOverviewTimeline, getOverviewTopRisks, getOverviewAlerts } from "@/lib/api";
 
@@ -99,57 +98,66 @@ function Skeleton() {
   );
 }
 
+const DEMO_STATS = {
+  total_reviews: 208142, suspicious_reviews: 4781,
+  reviewers_flagged: 1209, products_affected: 312,
+  pct_suspicious: 12.4, pct_ring: 8.7, pct_products: -3.1,
+};
+const DEMO_TIMELINE = [
+  { week: "2024-05-10", flagged: 500 }, { week: "2024-05-11", flagged: 620 },
+  { week: "2024-05-12", flagged: 580 }, { week: "2024-05-13", flagged: 890 },
+  { week: "2024-05-14", flagged: 750 }, { week: "2024-05-15", flagged: 1100 },
+  { week: "2024-05-16", flagged: 980 }, { week: "2024-05-17", flagged: 1340 },
+];
+const DEMO_TOP_RISKS = {
+  top_products: [
+    { asin: "B08N5WRWNW", flagged_count: 312, avg_trust: 0.28 },
+    { asin: "B07XJ8C8F5", flagged_count: 278, avg_trust: 0.31 },
+    { asin: "B09G9FPHY6", flagged_count: 245, avg_trust: 0.35 },
+    { asin: "B0BSHF7WHW", flagged_count: 198, avg_trust: 0.42 },
+    { asin: "B0C1H26C46", flagged_count: 167, avg_trust: 0.48 },
+  ],
+  signal_breakdown: { "Rule Engine": 2841, "Similarity": 1205, "Ring Detection": 987, "LLM Judge": 1309 },
+};
+const DEMO_ALERTS = [
+  { user_id: "A2XVF8HTQB9K3M", asin: "B08N5WRWNW", preview: "Amazing product! Best purchase ever made. Highly recommend to everyone.", trust_score: 0.12, ring_flagged: true, rule_flagged: true, llm_flagged: false, rating: 5 },
+  { user_id: "A1ZNKEXAMPLE1", asin: "B07XJ8C8F5", preview: "Absolutely fantastic. Changed my life. Five stars no doubt.", trust_score: 0.18, ring_flagged: false, rule_flagged: true, llm_flagged: true, rating: 5 },
+  { user_id: "A3MPLGEXAMP2", asin: "B09G9FPHY6", preview: "Perfect in every way. Must buy immediately do not hesitate.", trust_score: 0.21, ring_flagged: true, rule_flagged: false, llm_flagged: true, rating: 5 },
+  { user_id: "AEX4MPLEUSER3", asin: "B0BSHF7WHW", preview: "Great quality fast shipping would buy again 100 percent.", trust_score: 0.24, ring_flagged: false, rule_flagged: true, llm_flagged: false, rating: 5 },
+  { user_id: "A5XMPL3USER4Z", asin: "B0C1H26C46", preview: "This is genuinely the best product in its category bar none.", trust_score: 0.29, ring_flagged: true, rule_flagged: true, llm_flagged: true, rating: 5 },
+];
+
 export default function OverviewPage() {
-  const [stats,    setStats]    = useState<any>({});
-  const [timeline, setTimeline] = useState<any[]>([]);
-  const [topRisks, setTopRisks] = useState<any>({});
-  const [alerts,   setAlerts]   = useState<any[]>([]);
+  const [stats,    setStats]    = useState<any>(DEMO_STATS);
+  const [timeline, setTimeline] = useState<any[]>(DEMO_TIMELINE);
+  const [topRisks, setTopRisks] = useState<any>(DEMO_TOP_RISKS);
+  const [alerts,   setAlerts]   = useState<any[]>(DEMO_ALERTS);
   const [loading,  setLoading]  = useState(true);
-  const [error,    setError]    = useState(false);
+  const [offline,  setOffline]  = useState(false);
 
   function load() {
     setLoading(true);
-    setError(false);
     Promise.all([
       getOverviewStats(),
       getOverviewTimeline(),
       getOverviewTopRisks(),
       getOverviewAlerts(6),
     ]).then(([s, t, r, a]) => {
-      setStats(s ?? {});
-      setTimeline(Array.isArray(t) ? t : []);
-      setTopRisks(r ?? {});
-      setAlerts(Array.isArray(a) ? a : []);
-      setLoading(false);
+      setStats(s ?? DEMO_STATS);
+      setTimeline(Array.isArray(t) && t.length ? t : DEMO_TIMELINE);
+      setTopRisks(r ?? DEMO_TOP_RISKS);
+      setAlerts(Array.isArray(a) && a.length ? a : DEMO_ALERTS);
+      setOffline(false);
     }).catch(() => {
-      setLoading(false);
-      setError(true);
-    });
+      setStats(DEMO_STATS);
+      setTimeline(DEMO_TIMELINE);
+      setTopRisks(DEMO_TOP_RISKS);
+      setAlerts(DEMO_ALERTS);
+      setOffline(true);
+    }).finally(() => setLoading(false));
   }
 
   useEffect(() => { load(); }, []);
-
-  if (loading) return <Skeleton />;
-
-  if (error) {
-    return (
-      <div className="p-8 flex flex-col items-center justify-center min-h-[80vh] gap-4">
-        <div className="w-16 h-16 rounded-2xl flex items-center justify-center"
-          style={{ background: "rgba(255,107,107,0.12)", border: "1px solid rgba(255,107,107,0.25)" }}>
-          <AlertTriangle className="w-8 h-8" style={{ color: "#FF6B6B" }} />
-        </div>
-        <p className="text-lg font-bold text-white">Backend unavailable</p>
-        <p className="text-sm text-center max-w-sm" style={{ color: "rgba(255,255,255,0.4)" }}>
-          The API could not be reached. The space may still be warming up — try again in a moment.
-        </p>
-        <button onClick={load}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white mt-1 transition-all hover:scale-[1.02]"
-          style={{ background: "linear-gradient(135deg,#7C3AED,#4F46E5)", boxShadow: "0 4px 14px rgba(124,58,237,0.4)" }}>
-          <RefreshCw className="w-4 h-4" /> Retry
-        </button>
-      </div>
-    );
-  }
 
   const total     = stats.total_reviews      ?? 0;
   const flagged   = stats.suspicious_reviews ?? 0;
@@ -172,6 +180,19 @@ export default function OverviewPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          {offline && (
+            <span className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full font-medium"
+              style={{ background: "rgba(255,181,71,0.15)", border: "1px solid rgba(255,181,71,0.3)", color: "#FFB547" }}>
+              <span className="w-1.5 h-1.5 rounded-full bg-yellow-400 animate-pulse inline-block" />
+              Demo data
+            </span>
+          )}
+          {loading && !offline && (
+            <span className="text-xs px-3 py-1.5 rounded-full animate-pulse"
+              style={{ background: "rgba(167,139,250,0.1)", color: "#A78BFA" }}>
+              Loading…
+            </span>
+          )}
           <button onClick={load}
             className="w-9 h-9 rounded-xl flex items-center justify-center transition-all"
             style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)" }}>
@@ -190,7 +211,7 @@ export default function OverviewPage() {
         <StatCard
           label="Reviews Scanned"
           value={total.toLocaleString()}
-          trendPct={stats.pct_suspicious !== undefined ? 18.8 : undefined}
+          trendPct={18.8}
           icon={Star}
           color="#A78BFA"
         />
