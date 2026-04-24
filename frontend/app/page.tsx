@@ -104,10 +104,12 @@ const DEMO_STATS = {
   pct_suspicious: 12.4, pct_ring: 8.7, pct_products: -3.1,
 };
 const DEMO_TIMELINE = [
-  { week: "2024-05-10", flagged: 500 }, { week: "2024-05-11", flagged: 620 },
-  { week: "2024-05-12", flagged: 580 }, { week: "2024-05-13", flagged: 890 },
-  { week: "2024-05-14", flagged: 750 }, { week: "2024-05-15", flagged: 1100 },
-  { week: "2024-05-16", flagged: 980 }, { week: "2024-05-17", flagged: 1340 },
+  { week: "2024-01-01", flagged: 420 }, { week: "2024-02-01", flagged: 510 },
+  { week: "2024-03-01", flagged: 680 }, { week: "2024-04-01", flagged: 740 },
+  { week: "2024-05-01", flagged: 820 }, { week: "2024-06-01", flagged: 910 },
+  { week: "2024-07-01", flagged: 870 }, { week: "2024-08-01", flagged: 1050 },
+  { week: "2024-09-01", flagged: 980 }, { week: "2024-10-01", flagged: 1120 },
+  { week: "2024-11-01", flagged: 1240 }, { week: "2024-12-01", flagged: 1180 },
 ];
 const DEMO_TOP_RISKS = {
   top_products: [
@@ -158,6 +160,23 @@ export default function OverviewPage() {
   const flagged   = stats.suspicious_reviews ?? 0;
   const reviewers = stats.reviewers_flagged  ?? 0;
   const products  = stats.products_affected  ?? 0;
+
+  // Aggregate weekly timeline into monthly buckets for a smoother chart
+  const monthlyTimeline = (() => {
+    const buckets: Record<string, number[]> = {};
+    for (const row of timeline) {
+      const d = new Date(row.week);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      if (!buckets[key]) buckets[key] = [];
+      buckets[key].push(row.flagged ?? 0);
+    }
+    return Object.entries(buckets)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([key, vals]) => ({
+        week: `${key}-01`,
+        flagged: Math.round(vals.reduce((s, v) => s + v, 0) / vals.length),
+      }));
+  })();
 
   const signalEntries = topRisks?.signal_breakdown
     ? Object.entries(topRisks.signal_breakdown as Record<string, number>)
@@ -251,7 +270,7 @@ export default function OverviewPage() {
           <p className="text-sm font-semibold text-white mb-4">Suspicious Activity Over Time</p>
           <div className="rounded-xl p-3" style={GLASS_INNER}>
             <ResponsiveContainer width="100%" height={190}>
-              <AreaChart data={timeline} margin={{ top: 6, right: 8, left: -20, bottom: 0 }}>
+              <AreaChart data={monthlyTimeline} margin={{ top: 6, right: 8, left: -20, bottom: 0 }}>
                 <defs>
                   <linearGradient id="aGrad" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%"  stopColor="#7C3AED" stopOpacity={0.55} />
