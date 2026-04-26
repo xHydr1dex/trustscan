@@ -1,0 +1,48 @@
+{
+  "manifest_version": 3,
+  "name": "TrustScan — Fake Review Detector",
+  "version": "1.0.0",
+  "description": "Instantly spot fake reviews on Amazon, Flipkart, Meesho & Myntra. Powered by AI.",
+  "permissions": ["storage", "activeTab"],
+  "host_permissions": [
+    "*://*.amazon.in/*",
+    "*://*.amazon.com/*",
+    "*://*.flipkart.com/*",
+    "*://*.meesho.com/*",
+    "*://*.myntra.com/*",
+    "https://xhydr1dex-trustscan-api.hf.space/*"
+  ],
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_title": "TrustScan"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["*://*.amazon.in/*", "*://*.amazon.com/*"],
+      "js": ["content/shared.js", "content/knapsack.js", "content/amazon.js"],
+      "css": ["content/badge.css"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["*://*.flipkart.com/*"],
+      "js": ["content/shared.js", "content/flipkart.js"],
+      "css": ["content/badge.css"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["*://*.meesho.com/*"],
+      "js": ["content/shared.js", "content/meesho.js"],
+      "css": ["content/badge.css"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["*://*.myntra.com/*"],
+      "js": ["content/shared.js", "content/myntra.js"],
+      "css": ["content/badge.css"],
+      "run_at": "document_idle"
+    }
+  ]
+}

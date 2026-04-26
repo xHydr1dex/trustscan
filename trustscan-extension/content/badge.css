@@ -1,0 +1,117 @@
+/* ── TrustScan badges ── */
+.ts-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 11px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  margin-bottom: 8px;
+  line-height: 1;
+  cursor: default;
+  width: fit-content;
+}
+.ts-good {
+  background: rgba(34, 197, 94, 0.12);
+  border: 1px solid rgba(34, 197, 94, 0.35);
+  color: #16a34a;
+}
+.ts-warn {
+  background: rgba(251, 146, 60, 0.12);
+  border: 1px solid rgba(251, 146, 60, 0.35);
+  color: #ea580c;
+}
+.ts-bad {
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  color: #dc2626;
+}
+.ts-shield { font-size: 11px; }
+.ts-score  { font-size: 13px; font-weight: 700; }
+.ts-max    { font-size: 10px; opacity: 0.65; }
+.ts-lbl    { font-size: 11px; }
+.ts-flags  { display: flex; gap: 3px; margin-left: 2px; }
+.ts-flag {
+  font-size: 9px;
+  padding: 1px 5px;
+  border-radius: 8px;
+  background: rgba(0,0,0,0.08);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  font-weight: 700;
+}
+.ts-flag-bad  { background: rgba(220,38,38,0.15);  color: #dc2626; }
+.ts-flag-good { background: rgba(22,163,74,0.15);  color: #16a34a; }
+.ts-flag-ring {
+  background: rgba(168,85,247,0.2);
+  color: #9333ea;
+  border: 1px solid rgba(168,85,247,0.4);
+  animation: ts-ring-pulse 2s ease-in-out infinite;
+}
+@keyframes ts-ring-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.6; }
+}
+.ts-ml {
+  font-size: 10px;
+  opacity: 0.65;
+  font-weight: 600;
+  padding-left: 4px;
+  border-left: 1px solid currentColor;
+  opacity: 0.5;
+}
+.ts-badge-wrap {
+  margin-bottom: 8px;
+}
+.ts-explanation {
+  font-size: 11px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  color: #6b7280;
+  font-style: italic;
+  margin-top: 3px;
+  padding-left: 4px;
+  line-height: 1.4;
+}
+
+/* ── Floating action button ── */
+#ts-fab {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  z-index: 2147483647;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 13px 20px;
+  border-radius: 30px;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 700;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  color: #fff;
+  background: linear-gradient(135deg, #7C3AED 0%, #4F46E5 100%);
+  box-shadow: 0 4px 22px rgba(124, 58, 237, 0.55);
+  transition: transform 0.18s, box-shadow 0.18s, background 0.25s;
+  outline: none;
+}
+#ts-fab:hover:not(:disabled) {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 28px rgba(124, 58, 237, 0.65);
+}
+#ts-fab.ts-loading {
+  background: linear-gradient(135deg, #6d28d9 0%, #4338ca 100%);
+  animation: ts-pulse 1.2s ease-in-out infinite;
+}
+#ts-fab.ts-good { background: linear-gradient(135deg, #16a34a, #059669); box-shadow: 0 4px 22px rgba(22, 163, 74, 0.5); }
+#ts-fab.ts-warn { background: linear-gradient(135deg, #ea580c, #d97706); box-shadow: 0 4px 22px rgba(234, 88, 12, 0.5); }
+#ts-fab.ts-bad  { background: linear-gradient(135deg, #dc2626, #b91c1c); box-shadow: 0 4px 22px rgba(220, 38, 38, 0.5); }
+
+.ts-fab-icon { font-size: 15px; }
+
+@keyframes ts-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.7; }
+}
