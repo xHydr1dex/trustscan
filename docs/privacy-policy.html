@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TrustScan — Privacy Policy</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #0f0f10;
+      color: #e5e7eb;
+      line-height: 1.7;
+      padding: 2rem 1rem;
+    }
+
+    .container {
+      max-width: 720px;
+      margin: 0 auto;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 2.5rem;
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid #1e1e2e;
+    }
+
+    .shield {
+      width: 48px;
+      height: 48px;
+    }
+
+    header h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #a5b4fc;
+    }
+
+    header p {
+      font-size: 0.85rem;
+      color: #6b7280;
+    }
+
+    h2 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #c4b5fd;
+      margin: 2rem 0 0.75rem;
+    }
+
+    p, li {
+      color: #d1d5db;
+      font-size: 0.95rem;
+    }
+
+    ul {
+      padding-left: 1.5rem;
+      margin-top: 0.5rem;
+    }
+
+    li { margin-bottom: 0.4rem; }
+
+    .highlight {
+      background: #1e1e2e;
+      border-left: 3px solid #6366f1;
+      border-radius: 0 6px 6px 0;
+      padding: 1rem 1.25rem;
+      margin: 1rem 0;
+    }
+
+    a { color: #818cf8; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    footer {
+      margin-top: 3rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid #1e1e2e;
+      font-size: 0.8rem;
+      color: #4b5563;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <svg class="shield" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+        <defs>
+          <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#6366f1"/>
+            <stop offset="100%" style="stop-color:#8b5cf6"/>
+          </linearGradient>
+        </defs>
+        <path d="M64 8 L108 26 L108 62 C108 88 88 108 64 120 C40 108 20 88 20 62 L20 26 Z" fill="url(#g)"/>
+        <polyline points="42,64 56,80 86,50" fill="none" stroke="white" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <div>
+        <h1>TrustScan Privacy Policy</h1>
+        <p>Last updated: April 2025</p>
+      </div>
+    </header>
+
+    <div class="highlight">
+      <strong>Short version:</strong> TrustScan does not collect, store, or sell any personal data. Review text is sent to our AI backend solely to generate a trust score and is never retained.
+    </div>
+
+    <h2>What TrustScan does</h2>
+    <p>TrustScan is a Chrome extension that analyses customer reviews on e-commerce websites (Amazon, Flipkart, Myntra, Meesho) and assigns each review a trust score using rule-based checks, machine learning, and an LLM judge.</p>
+
+    <h2>Data we collect</h2>
+    <p>TrustScan does <strong>not</strong> collect any personally identifiable information. Specifically:</p>
+    <ul>
+      <li>We do not collect your name, email address, or any account credentials.</li>
+      <li>We do not track your browsing history or the pages you visit.</li>
+      <li>We do not store or log the review text you submit for analysis.</li>
+      <li>We do not use cookies or any cross-site tracking mechanisms.</li>
+    </ul>
+
+    <h2>Data sent to our servers</h2>
+    <p>When you click <strong>Scan Reviews</strong>, the extension sends the following data to our analysis API (<code>xhydr1dex-trustscan-api.hf.space</code>):</p>
+    <ul>
+      <li>The text of the visible reviews on the current product page</li>
+      <li>The star rating, verified purchase status, and whether media is attached — as extracted from the page</li>
+      <li>An anonymised reviewer ID derived from the public profile URL (not your identity)</li>
+    </ul>
+    <p>This data is processed in real time to produce a trust score and is <strong>not stored, logged, or retained</strong> by our servers after the response is sent.</p>
+
+    <h2>Local storage</h2>
+    <p>TrustScan uses <code>chrome.storage.local</code> to maintain a local reviewer knapsack on your device. This stores anonymised reviewer–product pairs (e.g. reviewer IDs and product ASINs you have scanned) to enable ring detection across sessions. This data:</p>
+    <ul>
+      <li>Never leaves your browser unless you explicitly trigger a scan</li>
+      <li>Is stored only on your device</li>
+      <li>Can be cleared at any time by removing the extension</li>
+    </ul>
+
+    <h2>Third-party services</h2>
+    <p>Our analysis API uses <a href="https://groq.com" target="_blank" rel="noopener">Groq</a> (LLaMA 3.3 70B) for LLM-based review analysis. Review text sent to our API may be forwarded to Groq's API for inference. Groq's privacy policy is available at <a href="https://groq.com/privacy-policy/" target="_blank" rel="noopener">groq.com/privacy-policy</a>. Groq does not use API inputs to train models.</p>
+
+    <h2>Permissions we request</h2>
+    <ul>
+      <li><strong>storage</strong> — to save the local reviewer knapsack for ring detection</li>
+      <li><strong>activeTab</strong> — to read review content from the tab you are currently viewing</li>
+      <li><strong>host permissions</strong> (amazon.in, amazon.com, flipkart.com, myntra.com, meesho.com) — to inject the scan button and read reviews on supported platforms</li>
+    </ul>
+    <p>We request only the minimum permissions necessary. We do not request access to your browsing history, cookies, or any other sensitive data.</p>
+
+    <h2>Children's privacy</h2>
+    <p>TrustScan is not directed at children under the age of 13 and does not knowingly collect any information from children.</p>
+
+    <h2>Changes to this policy</h2>
+    <p>If we make material changes to this policy, we will update the "Last updated" date above and release a new version of the extension. Continued use of TrustScan after changes constitutes acceptance of the updated policy.</p>
+
+    <h2>Contact</h2>
+    <p>Questions or concerns? Open an issue on our <a href="https://github.com/xHydr1dex/trustscan" target="_blank" rel="noopener">GitHub repository</a> or email us at <a href="mailto:everyhingawesome@gmail.com">everyhingawesome@gmail.com</a>.</p>
+
+    <footer>
+      &copy; 2025 TrustScan. Built for Indian e-commerce consumers.
+    </footer>
+  </div>
+</body>
+</html>
